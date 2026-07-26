@@ -34,6 +34,33 @@ Tests run against an in-memory SQLite DB (`phpunit.xml`), independent of the `da
 
 Demo login after seeding: `admin@sirh.test` / `password` (role `super-admin`).
 
+## Docker
+
+```bash
+# Build + start everything (app, nginx, postgres, pgadmin, queue worker)
+docker compose up -d --build
+
+# App:      http://localhost:8000   (APP_PORT in .env, default 8000)
+# pgAdmin:  http://localhost:5050   (PGADMIN_EMAIL/PGADMIN_PASSWORD in .env, default admin@admin.com / admin)
+# Postgres: localhost:5432          (DB_FORWARD_PORT in .env, default 5432)
+
+# Tests (run inside the app container, uses the isolated in-memory sqlite DB — see note below)
+docker compose exec app php artisan test
+
+# Artisan / composer / npm, same as local dev
+docker compose exec app php artisan migrate
+docker compose exec app composer install
+docker compose exec app npm run build
+
+docker compose down          # stop (keeps postgres/pgadmin volumes)
+docker compose down -v       # stop and wipe those volumes too
+```
+
+- `app` and `queue` (a `php artisan queue:work` worker) build from the root `Dockerfile` — a PHP-FPM 8.2 Alpine image with the extensions this app needs (`pdo_pgsql`, `gd`, `zip`, `intl`, `bcmath`, `exif`, `pcntl`, `opcache`) plus Composer and Node/npm. The app code itself is **bind-mounted**, not baked into the image (`docker/entrypoint.sh` runs `composer install`/`npm run build`/`php artisan migrate --force` on first boot, idempotently on every restart) — this mirrors how `Laravel Sail` (already a dev dependency) treats images as pure runtimes.
+- `nginx` proxies PHP requests to `app:9000` (config in `docker/nginx/default.conf`); it also bind-mounts the repo (read-only) since it serves `public/` directly.
+- **Never `migrate:fresh` in the entrypoint or otherwise** — it only runs `php artisan migrate --force`, matching the standing rule for this project's databases.
+- The compose file deliberately does **not** use `env_file: .env` on `app`/`queue` (only an `environment:` override for `DB_HOST`/`DB_PORT`, so Postgres is reached via the `postgres` service name). Laravel reads the rest of its config from the bind-mounted `.env` directly, exactly like outside Docker. Injecting the whole `.env` as real OS environment variables would instead take precedence over `phpunit.xml`'s (non-forced) `<env>` overrides and make tests run against the real Postgres container instead of the isolated sqlite `:memory:` DB — this was verified to actually break the suite (`assertSeeLivewire` macro missing, since Livewire only registers its testing macros when `app()->environment('testing')`) before the fix.
+
 ## Architecture
 
 **Stack**: Laravel 12, Livewire 3 (class-based components, not Volt) for app features, Volt only for the Breeze-generated auth pages (`resources/views/livewire/pages/auth/*`, `resources/views/livewire/profile/*`). Tailwind for styling. SQLite by default.

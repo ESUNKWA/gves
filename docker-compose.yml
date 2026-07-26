@@ -1,0 +1,97 @@
+services:
+  app:
+    image: gves/app:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+    # Laravel reads the rest of its config from the bind-mounted .env file
+    # itself (same as running outside Docker) — only the container-network
+    # host/port for Postgres are overridden here. Deliberately NOT using
+    # env_file: on this service: that would inject every .env value as a real
+    # OS environment variable, which takes precedence over phpunit.xml's
+    # (non-forced) <env> overrides and would make `php artisan test` run
+    # against the real Postgres container instead of the isolated sqlite
+    # :memory: DB.
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [gves]
+
+  queue:
+    image: gves/app:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www/html
+    # Laravel reads the rest of its config from the bind-mounted .env file
+    # itself (same as running outside Docker) — only the container-network
+    # host/port for Postgres are overridden here. Deliberately NOT using
+    # env_file: on this service: that would inject every .env value as a real
+    # OS environment variable, which takes precedence over phpunit.xml's
+    # (non-forced) <env> overrides and would make `php artisan test` run
+    # against the real Postgres container instead of the isolated sqlite
+    # :memory: DB.
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+    command: ["php", "artisan", "queue:work", "--tries=3", "--sleep=3"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks: [gves]
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${APP_PORT:-8000}:80"
+    depends_on:
+      - app
+    networks: [gves]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-sirh_db}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "${DB_FORWARD_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_DATABASE:-sirh_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [gves]
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      - postgres
+    networks: [gves]
+
+volumes:
+  postgres-data:
+  pgadmin-data:
+
+networks:
+  gves:
+    driver: bridge
