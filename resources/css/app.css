@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+    display: none !important;
+}
+
+/*
+ * Design tokens. Warm, considered neutrals instead of stock Tailwind gray/slate,
+ * with semantic colors kept separate from the client-configurable --color-primary
+ * (set per-request in the layout head from CompanySetting::primary_color).
+ * Light values live on :root; dark values override under the media query so every
+ * `bg-paper` / `text-fg` / etc. utility switches automatically, no `dark:` needed.
+ */
+:root {
+    --paper: 246 244 239;
+    --surface: 255 255 255;
+    --surface-2: 251 250 247;
+    --line: 230 226 216;
+    --line-soft: 238 235 226;
+    --fg: 29 27 23;
+    --muted: 120 116 108;
+    --faint: 153 149 140;
+    --success: 63 125 86;
+    --success-soft: 227 239 230;
+    --warning: 194 112 31;
+    --warning-soft: 246 230 214;
+    --danger: 177 67 47;
+    --danger-soft: 245 225 220;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --paper: 18 20 21;
+        --surface: 26 29 30;
+        --surface-2: 31 34 35;
+        --line: 43 46 46;
+        --line-soft: 38 41 41;
+        --fg: 236 233 226;
+        --muted: 154 150 141;
+        --faint: 114 110 102;
+        --success: 107 171 132;
+        --success-soft: 28 43 33;
+        --warning: 221 154 85;
+        --warning-soft: 47 36 21;
+        --danger: 217 123 100;
+        --danger-soft: 47 28 23;
+    }
+}
