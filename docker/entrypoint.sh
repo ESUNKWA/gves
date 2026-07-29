@@ -29,4 +29,10 @@ php artisan storage:link --force || true
 # separate operator decision (see CLAUDE.md).
 php artisan migrate --force
 
+# Every seeder DatabaseSeeder calls is idempotent (firstOrCreate-based), so
+# this is safe to run on every boot, not just the first — it's what creates
+# (or repairs the role on) the instance's super-admin from ADMIN_EMAIL /
+# ADMIN_PASSWORD, plus starter departments/positions/leave types/etc.
+php artisan db:seed --force
+
 exec "$@"

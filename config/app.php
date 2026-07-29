@@ -123,4 +123,22 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | First-boot Super-admin
+    |--------------------------------------------------------------------------
+    |
+    | AdminUserSeeder (run on every deploy via `php artisan db:seed`, see
+    | docker/entrypoint.sh) creates this instance's first super-admin from
+    | these values, idempotently. Since this product is one dedicated instance
+    | per client, ADMIN_EMAIL/ADMIN_PASSWORD must be overridden per deployment
+    | — leaving ADMIN_PASSWORD unset makes the seeder generate a random one
+    | instead of reusing the local-dev default.
+    |
+    */
+
+    'admin_name' => env('ADMIN_NAME', 'Admin RH'),
+    'admin_email' => env('ADMIN_EMAIL', 'admin@sirh.test'),
+    'admin_password' => env('ADMIN_PASSWORD'),
+
 ];

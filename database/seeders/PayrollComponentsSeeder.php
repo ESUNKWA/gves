@@ -19,6 +19,7 @@ class PayrollComponentsSeeder extends Seeder
             'name' => 'Salaire de base',
             'type' => PayrollComponent::TYPE_GAIN,
             'calculation_method' => PayrollComponent::METHOD_FIXED,
+            'is_base_salary' => true,
             'order' => 1,
         ]);
 
