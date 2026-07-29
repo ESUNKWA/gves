@@ -141,4 +141,20 @@ return [
     'admin_email' => env('ADMIN_EMAIL', 'admin@sirh.test'),
     'admin_password' => env('ADMIN_PASSWORD'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin password reset token
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret protecting PUT /api/admin/password (see
+    | AdminPasswordController) — lets deploy tooling/ops scripts rotate the
+    | super-admin password without a browser session, e.g. to replace the
+    | random one AdminUserSeeder prints when ADMIN_PASSWORD is unset. Left
+    | unset by default: the endpoint refuses every request (503) until this
+    | is explicitly configured, so it's never silently open.
+    |
+    */
+
+    'admin_reset_token' => env('ADMIN_RESET_TOKEN'),
+
 ];
