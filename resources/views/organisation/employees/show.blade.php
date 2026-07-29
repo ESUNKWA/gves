@@ -29,7 +29,7 @@
             @can('employees.anonymize')
                 @unless ($employee->is_anonymized)
                     <form method="POST" action="{{ route('organisation.employees.anonymize', $employee) }}"
-                        onsubmit="return confirm('Anonymiser définitivement les données personnelles de cet employé ? Cette action est irréversible (droit à l\'oubli RGPD).');">
+                        data-confirm="Anonymiser définitivement les données personnelles de cet employé ? Cette action est irréversible (droit à l'oubli RGPD).">
                         @csrf
                         <x-danger-button type="submit">{{ __('Anonymiser (RGPD)') }}</x-danger-button>
                     </form>
@@ -37,12 +37,6 @@
             @endcan
         </x-slot:actions>
     </x-page-header>
-
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
 
     @php
         $openedModal = old('_modal');
@@ -105,6 +99,14 @@
                 <div>
                     <dt class="text-xs uppercase text-muted">Date de naissance</dt>
                     <dd class="text-sm text-fg">{{ $employee->birth_date?->format('d/m/Y') ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs uppercase text-muted">Lieu de naissance</dt>
+                    <dd class="text-sm text-fg">{{ $employee->birth_place ?? '—' }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs uppercase text-muted">Nationalité</dt>
+                    <dd class="text-sm text-fg">{{ $employee->nationality ?? '—' }}</dd>
                 </div>
                 <div>
                     <dt class="text-xs uppercase text-muted">Email personnel</dt>

@@ -22,6 +22,7 @@ class DocumentController extends Controller
             'categories' => EmployeeDocument::categories(),
             'pendingSignatures' => $employee->generatedDocuments()
                 ->where('status', GeneratedDocument::STATUS_PENDING)
+                ->doesntHave('approvals')
                 ->latest()
                 ->get(),
             'documentTemplates' => DocumentTemplate::where('is_active', true)->orderBy('name')->get(),

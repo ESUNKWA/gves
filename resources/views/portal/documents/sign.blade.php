@@ -7,7 +7,7 @@
         </x-slot:actions>
     </x-page-header>
 
-    <div class="prose prose-sm max-w-none rounded-xl border border-line-soft bg-surface shadow-card p-6 text-fg mb-6"
+    <div class="document-content prose prose-sm max-w-none rounded-xl border border-line-soft bg-surface shadow-card p-6 text-fg mb-6"
         style="max-height: 50vh; overflow-y: auto;">
         @include('pdf.partials.header')
         {!! $generatedDocument->content !!}

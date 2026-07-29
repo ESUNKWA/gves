@@ -6,18 +6,18 @@
             onchange="this.form.submit()" />
     </form>
 
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employé
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Arrivée
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Départ
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employé</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Arrivée</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Départ</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-line">
@@ -38,7 +38,8 @@
                                 <x-status-chip tone="neutral">Absent</x-status-chip>
                             @elseif ($late > 0)
                                 <x-status-chip tone="warning">En retard
-                                    ({{ intdiv($late, 60) }}h{{ str_pad($late % 60, 2, '0', STR_PAD_LEFT) }})</x-status-chip>
+                                    ({{ intdiv($late, 60) }}h{{ str_pad($late % 60, 2, '0', STR_PAD_LEFT) }})
+                                </x-status-chip>
                             @elseif ($entry->clock_out)
                                 <x-status-chip tone="success">Journée terminée</x-status-chip>
                             @else
@@ -47,12 +48,12 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="4" class="px-6 py-8 text-center text-sm text-muted">Aucun employé à afficher.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 </x-app-layout>

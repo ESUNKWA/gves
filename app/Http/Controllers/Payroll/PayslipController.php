@@ -146,9 +146,7 @@ class PayslipController extends Controller
             'payslip' => $payslip,
             'employee' => $payslip->employee,
             'company' => CompanySetting::current(),
-            'attendance' => $payslip->attendanceSummary(),
             'leave' => $payslip->leaveSummary(),
-            'yearToDate' => $payslip->yearToDateSummary(),
         ]);
 
         $path = 'payslips/'.$payslip->employee_id.'/'.$payslip->period->format('Y-m').'.pdf';

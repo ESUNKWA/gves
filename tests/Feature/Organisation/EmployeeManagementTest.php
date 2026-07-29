@@ -77,6 +77,58 @@ class EmployeeManagementTest extends TestCase
         $this->assertSame(Employee::STATUS_ACTIVE, $employee->status);
     }
 
+    public function test_admin_can_set_birth_place_and_nationality_which_are_optional(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('organisation.employees.store'), [
+            'employee_number' => Employee::nextEmployeeNumber(),
+            'first_name' => 'Aminata',
+            'last_name' => 'Koné',
+            'hire_date' => now()->toDateString(),
+            'status' => Employee::STATUS_ACTIVE,
+            'birth_place' => 'Bouaké',
+            'nationality' => "Côte d'Ivoire",
+        ]);
+
+        $employee = Employee::firstOrFail();
+        $response->assertRedirect(route('organisation.employees.show', $employee));
+        $this->assertSame('Bouaké', $employee->birth_place);
+        $this->assertSame("Côte d'Ivoire", $employee->nationality);
+    }
+
+    public function test_birth_place_and_nationality_are_not_required_to_create_an_employee(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('organisation.employees.store'), [
+            'employee_number' => Employee::nextEmployeeNumber(),
+            'first_name' => 'Aminata',
+            'last_name' => 'Koné',
+            'hire_date' => now()->toDateString(),
+            'status' => Employee::STATUS_ACTIVE,
+        ]);
+
+        $response->assertSessionDoesntHaveErrors(['birth_place', 'nationality']);
+        $employee = Employee::firstOrFail();
+        $this->assertNull($employee->birth_place);
+        $this->assertNull($employee->nationality);
+    }
+
+    public function test_anonymizing_an_employee_also_erases_birth_place_and_nationality(): void
+    {
+        $employee = Employee::create([
+            'employee_number' => Employee::nextEmployeeNumber(),
+            'first_name' => 'Aminata',
+            'last_name' => 'Koné',
+            'hire_date' => now()->subYear(),
+            'status' => Employee::STATUS_ACTIVE,
+            'birth_place' => 'Bouaké',
+            'nationality' => "Côte d'Ivoire",
+        ]);
+
+        $employee->anonymize();
+
+        $this->assertNull($employee->fresh()->birth_place);
+        $this->assertNull($employee->fresh()->nationality);
+    }
+
     public function test_employee_number_is_auto_generated_and_unique(): void
     {
         $this->actingAs($this->admin)->post(route('organisation.employees.store'), [

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -38,6 +39,8 @@ class Employee extends Model
         'last_name',
         'gender',
         'birth_date',
+        'birth_place',
+        'nationality',
         'national_id',
         'personal_email',
         'personal_phone',
@@ -100,7 +103,7 @@ class Employee extends Model
      * Seniority as of a given date, e.g. "1 an(s) et 9 mois". Null if there's
      * no hire date or it's in the future relative to $asOf.
      */
-    public function seniorityLabel(\Carbon\Carbon $asOf): ?string
+    public function seniorityLabel(Carbon $asOf): ?string
     {
         if (! $this->hire_date || $this->hire_date->greaterThan($asOf)) {
             return null;
@@ -151,6 +154,8 @@ class Employee extends Model
             'last_name' => 'EMP-'.$this->id,
             'gender' => null,
             'birth_date' => null,
+            'birth_place' => null,
+            'nationality' => null,
             'national_id' => null,
             'personal_email' => null,
             'personal_phone' => null,
@@ -202,6 +207,17 @@ class Employee extends Model
     public function activeContract(): HasOne
     {
         return $this->hasOne(Contract::class)->where('status', 'active')->latestOfMany('start_date');
+    }
+
+    /**
+     * Most recent contract regardless of status — used to pre-fill "Salaire
+     * de base" when assigning payroll components, since a freshly entered
+     * contract commonly still sits in "Brouillon" (draft) rather than
+     * "Actif" at that point, which activeContract() would miss entirely.
+     */
+    public function latestContract(): HasOne
+    {
+        return $this->hasOne(Contract::class)->latestOfMany('start_date');
     }
 
     public function documents(): HasMany

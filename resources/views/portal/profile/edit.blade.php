@@ -1,11 +1,7 @@
 <x-app-layout>
     <x-page-header :title="__('Mon profil')" :description="__('Vos informations personnelles.')" />
 
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
+    <x-portal-tabs />
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="rounded-xl border border-line-soft bg-surface shadow-card p-6 lg:col-span-1 h-fit">

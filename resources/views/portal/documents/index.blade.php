@@ -6,67 +6,71 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
+    <x-portal-tabs />
 
     @if ($myDocumentRequests->isNotEmpty())
-        <div class="mb-6 rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
-            <div class="px-4 py-3 border-b border-line-soft">
-                <h3 class="text-sm font-semibold text-fg">Mes demandes de documents</h3>
-            </div>
-            <table class="min-w-full divide-y divide-line">
-                <thead class="bg-surface-2">
-                    <tr>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                            Gabarit</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                            Demandée le</th>
-                        <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
-                            Statut</th>
-                        <th class="px-4 py-2"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-line">
-                    @foreach ($myDocumentRequests as $documentRequest)
-                        @php
-                            $tones = [
-                                'pending' => 'warning',
-                                'fulfilled' => 'success',
-                                'rejected' => 'danger',
-                                'cancelled' => 'neutral',
-                            ];
-                        @endphp
+        <div class="mb-8">
+            <h3 class="text-base font-semibold text-fg">Mes demandes de documents</h3>
+            <p class="mb-3 text-xs text-muted">Le suivi de vos demandes envoyées aux RH — une fois traitées, le
+                document apparaît ci-dessous dans « Mes documents ».</p>
+            <x-data-table>
+                <table class="min-w-full divide-y divide-line">
+                    <thead class="bg-surface-2">
                         <tr>
-                            <td class="px-4 py-3 text-sm font-medium text-fg">
-                                {{ $documentRequest->template?->name ?? '—' }}</td>
-                            <td class="px-4 py-3 text-sm text-muted">{{ $documentRequest->created_at->format('d/m/Y') }}
-                            </td>
-                            <td class="px-4 py-3 text-sm">
-                                <x-status-chip :tone="$tones[$documentRequest->status] ?? 'neutral'">
-                                    {{ $documentRequestStatuses[$documentRequest->status] ?? $documentRequest->status }}
-                                </x-status-chip>
-                                @if ($documentRequest->status === 'rejected' && $documentRequest->decision_note)
-                                    <p class="mt-1 text-xs text-muted italic">{{ $documentRequest->decision_note }}</p>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-right text-sm">
-                                @if ($documentRequest->status === 'pending')
-                                    <form method="POST"
-                                        action="{{ route('portal.document-requests.destroy', $documentRequest) }}"
-                                        class="inline" onsubmit="return confirm('Annuler cette demande ?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-danger hover:underline">Annuler</button>
-                                    </form>
-                                @endif
-                            </td>
+                            <th data-sort
+                                class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                                Gabarit</th>
+                            <th data-sort
+                                class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                                Demandée le</th>
+                            <th data-sort
+                                class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                                Statut</th>
+                            <th class="px-4 py-2"></th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody class="divide-y divide-line">
+                        @foreach ($myDocumentRequests as $documentRequest)
+                            @php
+                                $tones = [
+                                    'pending' => 'warning',
+                                    'fulfilled' => 'success',
+                                    'rejected' => 'danger',
+                                    'cancelled' => 'neutral',
+                                ];
+                            @endphp
+                            <tr>
+                                <td class="px-4 py-3 text-sm font-medium text-fg">
+                                    {{ $documentRequest->template?->name ?? '—' }}</td>
+                                <td class="px-4 py-3 text-sm text-muted"
+                                    data-sort-value="{{ $documentRequest->created_at->timestamp }}">
+                                    {{ $documentRequest->created_at->format('d/m/Y à H:i') }}
+                                </td>
+                                <td class="px-4 py-3 text-sm">
+                                    <x-status-chip :tone="$tones[$documentRequest->status] ?? 'neutral'">
+                                        {{ $documentRequestStatuses[$documentRequest->status] ?? $documentRequest->status }}
+                                    </x-status-chip>
+                                    @if ($documentRequest->status === 'rejected' && $documentRequest->decision_note)
+                                        <p class="mt-1 text-xs text-muted italic">{{ $documentRequest->decision_note }}
+                                        </p>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-right text-sm">
+                                    @if ($documentRequest->status === 'pending')
+                                        <form method="POST"
+                                            action="{{ route('portal.document-requests.destroy', $documentRequest) }}"
+                                            class="inline" data-confirm="Annuler cette demande ?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-danger hover:underline">Annuler</button>
+                                        </form>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </x-data-table>
         </div>
     @endif
 
@@ -86,16 +90,19 @@
         </div>
     @endif
 
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <h3 class="text-base font-semibold text-fg">Mes documents</h3>
+    <p class="mb-3 text-xs text-muted">Les documents déjà disponibles dans votre dossier — à consulter ou
+        télécharger.</p>
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Titre
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Catégorie
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Ajouté le
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Titre</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Catégorie</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Ajouté le</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -106,7 +113,9 @@
                         <td class="px-6 py-4 text-sm text-muted">
                             {{ $categories[$document->category] ?? $document->category }}
                         </td>
-                        <td class="px-6 py-4 text-sm text-muted">{{ $document->uploaded_at?->format('d/m/Y') }}</td>
+                        <td class="px-6 py-4 text-sm text-muted"
+                            data-sort-value="{{ $document->uploaded_at?->timestamp ?? 0 }}">
+                            {{ $document->uploaded_at?->format('d/m/Y à H:i') }}</td>
                         <td class="px-6 py-4 text-right text-sm space-x-3">
                             <button type="button" x-data
                                 x-on:click="$dispatch('open-modal', 'view-document-{{ $document->id }}')"
@@ -116,14 +125,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="4" class="px-6 py-8 text-center text-sm text-muted">Aucun document pour le
                             moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 
     @foreach ($documents as $document)
         <x-modal name="view-document-{{ $document->id }}" maxWidth="4xl">
@@ -143,8 +152,13 @@
         </x-modal>
     @endforeach
 
-    <x-modal name="document-request-create" :show="$errors->has('document_template_id') || $errors->has('reason')" focusable>
-        <form method="POST" action="{{ route('portal.document-requests.store') }}" class="p-6">
+    <x-modal name="document-request-create" :show="$errors->has('document_template_id') || $errors->has('reason') || $errors->has('field_values.*')" focusable>
+        <form method="POST" action="{{ route('portal.document-requests.store') }}" class="p-6"
+            x-data="{
+                templateId: '{{ old('document_template_id') }}',
+                templatesFields: {{ Illuminate\Support\Js::from($documentTemplates->mapWithKeys(fn($t) => [(string) $t->id => $t->fields ?? []])) }},
+                get selectedFields() { return this.templatesFields[this.templateId] ?? []; },
+            }">
             @csrf
 
             <h2 class="text-lg font-medium text-fg">{{ __('Demander un document') }}</h2>
@@ -154,14 +168,35 @@
             <div class="mt-6 grid grid-cols-1 gap-4">
                 <div>
                     <x-input-label for="document_request_template" value="Type de document" />
-                    <x-select name="document_template_id" id="document_request_template" class="mt-1">
+                    <x-select name="document_template_id" id="document_request_template" x-model="templateId"
+                        class="mt-1">
+                        <option value=""></option>
                         @foreach ($documentTemplates as $documentTemplate)
-                            <option value="{{ $documentTemplate->id }}" @selected(old('document_template_id') == $documentTemplate->id)>
-                                {{ $documentTemplate->name }}</option>
+                            <option value="{{ $documentTemplate->id }}">{{ $documentTemplate->name }}</option>
                         @endforeach
                     </x-select>
                     <x-input-error :messages="$errors->get('document_template_id')" class="mt-2" />
                 </div>
+
+                <template x-for="field in selectedFields" :key="field.key">
+                    <div>
+                        <label class="block text-sm font-medium text-fg"
+                            x-text="field.label + (field.required ? ' *' : '')"></label>
+                        <template x-if="field.type === 'textarea'">
+                            <textarea :name="`field_values[${field.key}]`" :required="field.required" rows="3"
+                                class="mt-1 block w-full rounded-lg border-line bg-surface text-sm text-fg shadow-sm focus:border-brand focus:ring-brand"></textarea>
+                        </template>
+                        <template x-if="field.type !== 'textarea'">
+                            <input :type="field.type === 'number' ? 'number' : 'text'"
+                                :name="`field_values[${field.key}]`" :required="field.required"
+                                class="mt-1 block w-full rounded-lg border-line bg-surface text-sm text-fg shadow-sm focus:border-brand focus:ring-brand">
+                        </template>
+                    </div>
+                </template>
+
+                @if ($errors->has('field_values.*'))
+                    <x-input-error :messages="$errors->get('field_values.*')" />
+                @endif
 
                 <div>
                     <x-input-label for="document_request_reason" value="Motif (optionnel)" />

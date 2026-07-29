@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Portal;
 
 use App\Http\Controllers\Controller;
 use App\Models\DocumentRequest;
+use App\Models\DocumentTemplate;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -18,9 +19,14 @@ class DocumentRequestController extends Controller
             'reason' => 'nullable|string|max:1000',
         ]);
 
+        $template = DocumentTemplate::findOrFail($data['document_template_id']);
+
+        $fieldValues = $request->validate($template->fieldValueRules())['field_values'] ?? [];
+
         $employee->documentRequests()->create([
             'document_template_id' => $data['document_template_id'],
             'reason' => $data['reason'] ?? null,
+            'field_values' => $template->filterFieldValues($fieldValues),
             'status' => DocumentRequest::STATUS_PENDING,
         ]);
 

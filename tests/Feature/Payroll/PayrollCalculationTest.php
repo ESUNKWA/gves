@@ -9,6 +9,8 @@ use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\TestCase;
 
 class PayrollCalculationTest extends TestCase
@@ -152,7 +154,7 @@ class PayrollCalculationTest extends TestCase
         $payslip = Payslip::generateFor($employee, Carbon::create(2026, 7, 1));
         $payslip->update(['status' => Payslip::STATUS_VALIDATED]);
 
-        $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
+        $this->expectException(HttpException::class);
         Payslip::generateFor($employee, Carbon::create(2026, 7, 1));
     }
 
@@ -218,7 +220,7 @@ class PayrollCalculationTest extends TestCase
         $this->assertNotNull($payslip->pdf_path);
         $this->assertNotNull($payslip->reference);
         $this->assertSame('Virement bancaire', $payslip->payment_method);
-        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($payslip->pdf_path);
+        Storage::disk('local')->assertExists($payslip->pdf_path);
     }
 
     public function test_employee_only_sees_validated_payslips_in_self_service(): void
@@ -244,6 +246,33 @@ class PayrollCalculationTest extends TestCase
         $response->assertDontSee(ucfirst($draft->periodLabel()));
     }
 
+    public function test_employee_can_view_their_own_payslip_inline_and_download_it_as_an_attachment(): void
+    {
+        $employeeUser = User::factory()->create();
+        $employeeUser->assignRole('employe');
+        $employee = $this->makeEmployee(['user_id' => $employeeUser->id]);
+
+        $baseSalary = PayrollComponent::create([
+            'name' => 'Salaire de base', 'code' => 'BASE',
+            'type' => PayrollComponent::TYPE_GAIN, 'calculation_method' => PayrollComponent::METHOD_FIXED, 'order' => 1,
+        ]);
+        $employee->payComponents()->create(['payroll_component_id' => $baseSalary->id, 'amount' => 100000, 'is_active' => true]);
+        $payslip = Payslip::generateFor($employee, Carbon::create(2026, 7, 1));
+
+        $this->actingAs($this->admin)->post(route('payroll.payslips.validate', $payslip), [
+            'payment_method' => 'Virement bancaire',
+            'payment_date' => '2026-07-31',
+        ]);
+
+        $viewResponse = $this->actingAs($employeeUser)->get(route('portal.payslips.view', $payslip));
+        $viewResponse->assertOk();
+        $this->assertStringContainsString('inline', $viewResponse->headers->get('Content-Disposition'));
+
+        $downloadResponse = $this->actingAs($employeeUser)->get(route('portal.payslips.download', $payslip));
+        $downloadResponse->assertOk();
+        $this->assertStringContainsString('attachment', $downloadResponse->headers->get('Content-Disposition'));
+    }
+
     public function test_employee_cannot_download_someone_elses_payslip(): void
     {
         $employeeUser = User::factory()->create();
@@ -259,7 +288,8 @@ class PayrollCalculationTest extends TestCase
         $payslip = Payslip::generateFor($otherEmployee, Carbon::create(2026, 7, 1));
         $payslip->update(['status' => Payslip::STATUS_VALIDATED, 'pdf_path' => 'payslips/fake.pdf']);
 
-        $this->actingAs($employeeUser)->get(route('portal.payslips.pdf', $payslip))->assertNotFound();
+        $this->actingAs($employeeUser)->get(route('portal.payslips.view', $payslip))->assertNotFound();
+        $this->actingAs($employeeUser)->get(route('portal.payslips.download', $payslip))->assertNotFound();
     }
 
     public function test_a_user_without_payroll_permission_cannot_run_payroll(): void

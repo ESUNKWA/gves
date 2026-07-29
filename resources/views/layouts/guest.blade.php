@@ -40,6 +40,8 @@
                 <span class="text-base font-semibold text-white">{{ config('app.name', 'SIRH') }}</span>
             </a>
 
+            @php $variant = $variant ?? 'rh'; @endphp
+
             <div class="relative flex flex-1 flex-col justify-center gap-8 overflow-y-auto py-10">
                 <div>
                     <h2 class="whitespace-nowrap text-2xl font-semibold leading-tight text-white">
@@ -47,89 +49,133 @@
                         <span class="text-brand">E</span>mployés <span class="text-brand">S</span>implement.
                     </h2>
                     <p class="mt-4 max-w-md text-sm text-slate-400">
-                        {{ __('Organisation, temps de travail, congés, paie et documents RH réunis dans un seul espace sécurisé.') }}
+                        @if ($variant === 'personnel')
+                            {{ __('Pointage, congés, documents et bulletins de paie : votre espace personnel, accessible en toute autonomie.') }}
+                        @else
+                            {{ __('Organisation, temps de travail, congés, paie et documents RH réunis dans un seul espace sécurisé.') }}
+                        @endif
                     </p>
                 </div>
 
-                {{-- Stylized team preview --}}
-                <div class="max-w-md rounded-2xl border border-white/10 bg-surface p-5 shadow-pop">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm font-semibold text-fg">{{ __('Votre équipe') }}</p>
-                            <p class="mt-0.5 text-xs text-muted">{{ __('128 employés actifs') }}</p>
-                        </div>
-                        <span
-                            class="rounded-md bg-brand/10 px-2 py-1 text-[11px] font-medium text-brand">{{ __('+12 ce mois-ci') }}</span>
-                    </div>
-
-                    <div class="mt-4 flex items-center">
-                        @php
-                            $teamPreview = [
-                                ['initials' => 'AK', 'color' => '#2a78d6'],
-                                ['initials' => 'FB', 'color' => '#eb6834'],
-                                ['initials' => 'MK', 'color' => '#1baf7a'],
-                                ['initials' => 'SD', 'color' => '#eda100'],
-                                ['initials' => 'JT', 'color' => '#e87ba4'],
-                            ];
-                        @endphp
-                        @foreach ($teamPreview as $member)
+                @if ($variant === 'personnel')
+                    {{-- Stylized "Mon espace" preview --}}
+                    <div class="max-w-md rounded-2xl border border-white/10 bg-surface p-5 shadow-pop">
+                        <p class="text-sm font-semibold text-fg">{{ __('Mon pointage — aujourd\'hui') }}</p>
+                        <div
+                            class="mt-4 flex items-center justify-between rounded-lg border border-line-soft bg-surface-2 px-4 py-3">
+                            <div>
+                                <p class="text-xs text-muted">{{ __('Arrivée') }}</p>
+                                <p class="text-sm font-medium text-fg">08:02</p>
+                            </div>
+                            <div class="h-8 w-px bg-line"></div>
+                            <div>
+                                <p class="text-xs text-muted">{{ __('Départ') }}</p>
+                                <p class="text-sm font-medium text-muted">—</p>
+                            </div>
                             <span
-                                class="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ring-2 ring-surface first:ml-0"
-                                style="background-color: {{ $member['color'] }}">
-                                {{ $member['initials'] }}
+                                class="rounded-md bg-brand/10 px-2.5 py-1 text-xs font-medium text-brand">{{ __('En poste') }}</span>
+                        </div>
+                    </div>
+
+                    {{-- Stylized "Mes congés" preview --}}
+                    <div class="max-w-md rounded-2xl border border-white/10 bg-surface p-5 shadow-pop">
+                        <p class="text-sm font-semibold text-fg">{{ __('Mes congés') }}</p>
+                        <div class="mt-4 space-y-3">
+                            <div
+                                class="flex items-center justify-between rounded-lg border border-line-soft bg-surface-2 px-4 py-3">
+                                <span class="text-sm text-fg">{{ __('Congé payé') }}</span>
+                                <span class="text-sm font-medium text-muted">18,5 {{ __('j. restants') }}</span>
+                            </div>
+                            <div
+                                class="flex items-center justify-between rounded-lg border border-line-soft bg-surface-2 px-4 py-3">
+                                <span class="text-sm text-fg">{{ __('Congé maladie') }}</span>
+                                <span class="text-sm font-medium text-muted">3 {{ __('j. pris') }}</span>
+                            </div>
+                        </div>
+                    </div>
+                @else
+                    {{-- Stylized team preview --}}
+                    <div class="max-w-md rounded-2xl border border-white/10 bg-surface p-5 shadow-pop">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-fg">{{ __('Votre équipe') }}</p>
+                                <p class="mt-0.5 text-xs text-muted">{{ __('128 employés actifs') }}</p>
+                            </div>
+                            <span
+                                class="rounded-md bg-brand/10 px-2 py-1 text-[11px] font-medium text-brand">{{ __('+12 ce mois-ci') }}</span>
+                        </div>
+
+                        <div class="mt-4 flex items-center">
+                            @php
+                                $teamPreview = [
+                                    ['initials' => 'AK', 'color' => '#2a78d6'],
+                                    ['initials' => 'FB', 'color' => '#eb6834'],
+                                    ['initials' => 'MK', 'color' => '#1baf7a'],
+                                    ['initials' => 'SD', 'color' => '#eda100'],
+                                    ['initials' => 'JT', 'color' => '#e87ba4'],
+                                ];
+                            @endphp
+                            @foreach ($teamPreview as $member)
+                                <span
+                                    class="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ring-2 ring-surface first:ml-0"
+                                    style="background-color: {{ $member['color'] }}">
+                                    {{ $member['initials'] }}
+                                </span>
+                            @endforeach
+                            <span
+                                class="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold text-muted ring-2 ring-surface">
+                                +123
                             </span>
-                        @endforeach
-                        <span
-                            class="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-2 text-xs font-semibold text-muted ring-2 ring-surface">
-                            +123
-                        </span>
-                    </div>
-                </div>
-
-                {{-- Stylized product preview --}}
-                <div class="max-w-md rounded-2xl border border-white/10 bg-surface p-5 shadow-pop">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm font-semibold text-fg">{{ __('Rapports & pilotage') }}</p>
-                        <span
-                            class="rounded-md bg-brand/10 px-2 py-1 text-[11px] font-medium text-brand">{{ now()->format('Y') }}</span>
-                    </div>
-
-                    <div class="mt-5 grid grid-cols-3 gap-3">
-                        <div class="rounded-lg border border-line-soft bg-surface-2 p-3">
-                            <p class="text-[11px] text-muted">{{ __('Effectifs') }}</p>
-                            <p class="mt-1 text-lg font-semibold text-fg">128</p>
-                        </div>
-                        <div class="rounded-lg border border-line-soft bg-surface-2 p-3">
-                            <p class="text-[11px] text-muted">{{ __('Ponctualité') }}</p>
-                            <p class="mt-1 text-lg font-semibold text-fg">96%</p>
-                        </div>
-                        <div class="rounded-lg border border-line-soft bg-surface-2 p-3">
-                            <p class="text-[11px] text-muted">{{ __('Masse salariale') }}</p>
-                            <p class="mt-1 text-lg font-semibold text-fg">42,5M</p>
                         </div>
                     </div>
 
-                    <div class="mt-5 flex h-24 items-end gap-2 rounded-lg border border-line-soft bg-surface-2 p-4">
-                        @foreach ([45, 60, 38, 70, 55, 80, 65, 90, 72, 85, 60, 95] as $bar)
-                            <span class="flex-1 rounded-t-sm"
-                                style="height: {{ $bar }}%; background-color: rgb(var(--color-primary) / {{ $loop->last ? '1' : '0.35' }})"></span>
-                        @endforeach
-                    </div>
-
-                    <div
-                        class="mt-5 flex items-center justify-between rounded-lg border border-line-soft bg-surface-2 px-4 py-3">
-                        <div class="flex items-center gap-2.5">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75"
-                                    stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                </svg>
-                            </span>
-                            <p class="text-sm text-fg">{{ __('Bulletin de paie de juillet validé') }}</p>
+                    {{-- Stylized product preview --}}
+                    <div class="max-w-md rounded-2xl border border-white/10 bg-surface p-5 shadow-pop">
+                        <div class="flex items-center justify-between">
+                            <p class="text-sm font-semibold text-fg">{{ __('Rapports & pilotage') }}</p>
+                            <span
+                                class="rounded-md bg-brand/10 px-2 py-1 text-[11px] font-medium text-brand">{{ now()->format('Y') }}</span>
                         </div>
-                        <span class="text-xs text-muted">{{ __('à l\'instant') }}</span>
+
+                        <div class="mt-5 grid grid-cols-3 gap-3">
+                            <div class="rounded-lg border border-line-soft bg-surface-2 p-3">
+                                <p class="text-[11px] text-muted">{{ __('Effectifs') }}</p>
+                                <p class="mt-1 text-lg font-semibold text-fg">128</p>
+                            </div>
+                            <div class="rounded-lg border border-line-soft bg-surface-2 p-3">
+                                <p class="text-[11px] text-muted">{{ __('Ponctualité') }}</p>
+                                <p class="mt-1 text-lg font-semibold text-fg">96%</p>
+                            </div>
+                            <div class="rounded-lg border border-line-soft bg-surface-2 p-3">
+                                <p class="text-[11px] text-muted">{{ __('Masse salariale') }}</p>
+                                <p class="mt-1 text-lg font-semibold text-fg">42,5M</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-5 flex h-24 items-end gap-2 rounded-lg border border-line-soft bg-surface-2 p-4">
+                            @foreach ([45, 60, 38, 70, 55, 80, 65, 90, 72, 85, 60, 95] as $bar)
+                                <span class="flex-1 rounded-t-sm"
+                                    style="height: {{ $bar }}%; background-color: rgb(var(--color-primary) / {{ $loop->last ? '1' : '0.35' }})"></span>
+                            @endforeach
+                        </div>
+
+                        <div
+                            class="mt-5 flex items-center justify-between rounded-lg border border-line-soft bg-surface-2 px-4 py-3">
+                            <div class="flex items-center gap-2.5">
+                                <span
+                                    class="flex h-8 w-8 items-center justify-center rounded-full bg-brand/10 text-brand">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.75"
+                                        stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M4.5 12.75l6 6 9-13.5" />
+                                    </svg>
+                                </span>
+                                <p class="text-sm text-fg">{{ __('Bulletin de paie de juillet validé') }}</p>
+                            </div>
+                            <span class="text-xs text-muted">{{ __('à l\'instant') }}</span>
+                        </div>
                     </div>
-                </div>
+                @endif
             </div>
 
             <p class="relative text-xs text-slate-500">

@@ -22,16 +22,23 @@ class EmployeeDocumentRequestController extends Controller
 
         $template = DocumentTemplate::findOrFail($data['document_template_id']);
 
-        $employee->generatedDocuments()->create([
+        $fieldValues = $request->validate($template->fieldValueRules())['field_values'] ?? [];
+
+        $generatedDocument = $employee->generatedDocuments()->create([
             'document_template_id' => $template->id,
             'title' => $data['title'],
-            'content' => GeneratedDocument::renderContent($template->content, $employee),
+            'content' => GeneratedDocument::renderContent($template->content, $employee, $template->filterFieldValues($fieldValues)),
             'status' => GeneratedDocument::STATUS_PENDING,
             'created_by' => $request->user()->id,
         ]);
+        $generatedDocument->initializeApprovals($request->user());
+
+        $status = $generatedDocument->fresh()->status === GeneratedDocument::STATUS_SIGNED
+            ? 'Document généré et archivé.'
+            : 'Document généré et prêt à être envoyé pour validation.';
 
         return redirect()->route('organisation.employees.show', $employee)
-            ->with('status', 'Document généré et prêt à être envoyé pour signature.')
+            ->with('status', $status)
             ->with('open_tab', 'signatures');
     }
 

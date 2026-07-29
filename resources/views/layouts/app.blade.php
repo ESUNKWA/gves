@@ -23,7 +23,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
-<body class="h-full font-sans antialiased bg-paper">
+<body class="h-full font-sans antialiased bg-paper" data-flash-status="{{ session('status') }}"
+    data-flash-error="{{ session('error') }}">
     <div x-data="{ sidebarOpen: false }" class="flex h-full">
         <!-- Mobile sidebar overlay -->
         <div x-show="sidebarOpen" x-transition:enter="transition-opacity ease-linear duration-300"

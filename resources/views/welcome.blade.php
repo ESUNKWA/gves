@@ -42,13 +42,20 @@
                 <a href="#espace" class="transition hover:text-fg">{{ __('Mon espace') }}</a>
             </nav>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
                 @auth
                     <a href="{{ route('dashboard') }}"
                         class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110">
                         {{ __('Tableau de bord') }}
                     </a>
                 @else
+                    @if (Route::has('login.personnel'))
+                        <a href="{{ route('login.personnel') }}"
+                            class="hidden text-sm font-medium text-muted transition hover:text-fg sm:inline">
+                            {{ __('Espace personnel') }}
+                        </a>
+                    @endif
+
                     @if (Route::has('login'))
                         <a href="{{ route('login') }}"
                             class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:brightness-110">

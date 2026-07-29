@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Documents;
 
+use App\Models\CompanySetting;
+use App\Models\Contract;
 use App\Models\DocumentTemplate;
 use App\Models\Employee;
 use App\Models\EmployeeDocument;
@@ -59,6 +61,114 @@ class DocumentSignatureTest extends TestCase
 
         $response->assertRedirect(route('documents.templates.index'));
         $this->assertDatabaseHas('document_templates', ['name' => 'Attestation simple']);
+    }
+
+    public function test_template_content_keeps_rich_text_formatting_but_strips_disallowed_tags_and_attributes(): void
+    {
+        $response = $this->actingAs($this->admin)->post(route('documents.templates.store'), [
+            '_modal' => 'template-create',
+            'name' => 'Attestation formatée',
+            'category' => DocumentTemplate::CATEGORY_ATTESTATION,
+            'content' => '<p onclick="alert(1)"><strong>Important</strong> : <u>lu et approuvé</u></p>'
+                .'<script>alert(1)</script><img src="x" onerror="alert(1)">',
+            'is_active' => '1',
+        ]);
+
+        $response->assertRedirect(route('documents.templates.index'));
+
+        $template = DocumentTemplate::where('name', 'Attestation formatée')->firstOrFail();
+        $this->assertStringContainsString('<strong>Important</strong>', $template->content);
+        $this->assertStringContainsString('<u>lu et approuvé</u>', $template->content);
+        $this->assertStringContainsString('<p>', $template->content);
+        $this->assertStringNotContainsString('onclick', $template->content);
+        $this->assertStringNotContainsString('<script', $template->content);
+        $this->assertStringNotContainsString('<img', $template->content);
+        $this->assertStringNotContainsString('onerror', $template->content);
+    }
+
+    public function test_generated_document_keeps_template_formatting_but_escapes_substituted_employee_data(): void
+    {
+        $employee = $this->makeEmployee(['first_name' => '<script>alert(1)</script>', 'last_name' => 'Koné']);
+
+        $rendered = GeneratedDocument::renderContent(
+            '<p><strong>Attestation</strong> pour {{employe.prenom}} {{employe.nom}}.</p>',
+            $employee
+        );
+
+        $this->assertStringContainsString('<strong>Attestation</strong>', $rendered);
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $rendered);
+        $this->assertStringContainsString('&lt;script&gt;', $rendered);
+    }
+
+    public function test_generated_document_substitutes_contract_variables_from_the_latest_contract(): void
+    {
+        $employee = $this->makeEmployee();
+        // Still "Brouillon" (draft), as a freshly entered contract commonly
+        // is when HR generates the contract document right after typing it in.
+        $employee->contracts()->create([
+            'contract_type' => Contract::TYPE_CDI,
+            'job_title' => 'Développeur Backend',
+            'start_date' => '2026-01-15',
+            'base_salary' => 350000,
+            'currency' => 'XOF',
+            'working_hours_per_week' => 40,
+            'status' => Contract::STATUS_DRAFT,
+        ]);
+
+        $rendered = GeneratedDocument::renderContent(
+            'Contrat {{contrat.type}} pour le poste {{contrat.poste}}, débutant le {{contrat.date_debut}}, '
+                .'salaire {{contrat.salaire_base}} {{contrat.devise}}, {{contrat.heures_semaine}}h/semaine.',
+            $employee
+        );
+
+        $this->assertStringContainsString('Contrat CDI', $rendered);
+        $this->assertStringContainsString('Développeur Backend', $rendered);
+        $this->assertStringContainsString('15/01/2026', $rendered);
+        $this->assertStringContainsString('350 000 XOF', $rendered);
+        $this->assertStringContainsString('40h/semaine', $rendered);
+    }
+
+    public function test_contract_variables_render_as_empty_strings_when_the_employee_has_no_contract(): void
+    {
+        $employee = $this->makeEmployee();
+
+        $rendered = GeneratedDocument::renderContent('Poste : {{contrat.poste}}.', $employee);
+
+        $this->assertSame('Poste : .', $rendered);
+    }
+
+    public function test_generated_document_substitutes_company_variables(): void
+    {
+        $employee = $this->makeEmployee();
+        CompanySetting::current()->update([
+            'name' => 'GVES', 'legal_name' => 'GVES SARL', 'phone' => '+225 27 00 00 00',
+            'email' => 'contact@gves.test', 'registration_number' => 'CI-ABJ-2024-B-1234',
+            'tax_id' => 'FISC-5678', 'social_security_number' => 'CNPS-9012',
+            'collective_agreement' => 'Convention interprofessionnelle',
+        ]);
+
+        $rendered = GeneratedDocument::renderContent(
+            '{{entreprise.nom}} ({{entreprise.raison_sociale}}) - {{entreprise.telephone}} - {{entreprise.email}} '
+                .'- RCCM {{entreprise.rccm}} - Fiscal {{entreprise.numero_fiscal}} - CNPS {{entreprise.cnps}} - {{entreprise.convention_collective}}',
+            $employee
+        );
+
+        $this->assertStringContainsString('GVES (GVES SARL)', $rendered);
+        $this->assertStringContainsString('+225 27 00 00 00', $rendered);
+        $this->assertStringContainsString('contact@gves.test', $rendered);
+        $this->assertStringContainsString('RCCM CI-ABJ-2024-B-1234', $rendered);
+        $this->assertStringContainsString('Fiscal FISC-5678', $rendered);
+        $this->assertStringContainsString('CNPS CNPS-9012', $rendered);
+        $this->assertStringContainsString('Convention interprofessionnelle', $rendered);
+    }
+
+    public function test_template_editor_variables_are_grouped_by_source(): void
+    {
+        $variables = DocumentTemplate::availableVariables();
+
+        $this->assertEqualsCanonicalizing(['Employé', 'Contrat', 'Entreprise', 'Autre'], array_keys($variables));
+        $this->assertArrayHasKey('{{contrat.salaire_base}}', $variables['Contrat']);
+        $this->assertArrayHasKey('{{entreprise.rccm}}', $variables['Entreprise']);
     }
 
     public function test_a_template_already_used_cannot_be_deleted(): void

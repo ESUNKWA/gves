@@ -12,9 +12,6 @@
     </x-page-header>
 
     <form method="GET" action="{{ route('organisation.employees.index') }}" class="mb-6 flex flex-wrap gap-3">
-        <x-text-input type="search" name="search" value="{{ $search }}" class="w-64"
-            placeholder="Nom, prénom, matricule..." />
-
         <x-select name="status" class="w-auto" onchange="this.form.submit()">
             <option value="">Tous les statuts</option>
             @foreach ($statuses as $value => $label)
@@ -39,24 +36,22 @@
         <x-secondary-button type="submit">{{ __('Filtrer') }}</x-secondary-button>
     </form>
 
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employé</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Matricule
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Poste</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Département
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Site</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employé</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Matricule</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Poste</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Département</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Site</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -90,7 +85,7 @@
                                 class="text-brand hover:underline">Voir</a>
                             @can('employees.manage')
                                 <form method="POST" action="{{ route('organisation.employees.destroy', $employee) }}"
-                                    class="inline" onsubmit="return confirm('Supprimer cet employé ?');">
+                                    class="inline" data-confirm="Supprimer cet employé ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -99,16 +94,12 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="7" class="px-6 py-8 text-center text-sm text-muted">Aucun employé pour le
                             moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $employees->links() }}
-    </div>
+    </x-data-table>
 </x-app-layout>

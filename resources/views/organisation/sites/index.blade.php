@@ -9,28 +9,20 @@
         </x-slot:actions>
     </x-page-header>
 
-    <form method="GET" action="{{ route('organisation.sites.index') }}" class="mb-6 max-w-xs">
-        <x-text-input type="search" name="search" value="{{ $search }}" class="w-full"
-            placeholder="Rechercher un site..." />
-    </form>
-
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nom</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Code</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Ville / Pays
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employés
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Nom</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Code</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Ville / Pays</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employés</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -56,7 +48,7 @@
                                     class="text-brand hover:underline">Modifier</button>
 
                                 <form method="POST" action="{{ route('organisation.sites.destroy', $site) }}"
-                                    class="inline" onsubmit="return confirm('Supprimer ce site ?');">
+                                    class="inline" data-confirm="Supprimer ce site ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -65,18 +57,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="6" class="px-6 py-8 text-center text-sm text-muted">Aucun site pour le moment.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $sites->links() }}
-    </div>
+    </x-data-table>
 
     <x-modal name="site-create" :show="old('_modal') === 'site-create'" focusable>
         <form method="POST" action="{{ route('organisation.sites.store') }}" class="p-6">

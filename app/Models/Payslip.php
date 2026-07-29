@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class Payslip extends Model
 {
@@ -88,8 +91,8 @@ class Payslip extends Model
      */
     public function qrCodeDataUri(): string
     {
-        $qrCode = new \Endroid\QrCode\QrCode($this->verificationUrl());
-        $writer = new \Endroid\QrCode\Writer\PngWriter();
+        $qrCode = new QrCode($this->verificationUrl());
+        $writer = new PngWriter;
 
         return $writer->write($qrCode)->getDataUri();
     }
@@ -120,18 +123,28 @@ class Payslip extends Model
      * percentage-of-gross deductions/employer charges can reference final
      * values. Manually added lines (payroll_component_id null) are left
      * untouched — only lines tied to a component are replaced.
+     *
+     * If the employee's latest contract negotiates a NET salary
+     * (Contract::SALARY_MODE_NET), the base salary gain is solved backwards
+     * so that gross - deductions lands exactly on that target net, however
+     * the deduction rules are configured — see solveGrossForNet().
      */
     public static function generateFor(Employee $employee, Carbon $period, ?int $generatedBy = null): self
     {
         $period = $period->copy()->startOfMonth();
 
-        $assignments = $employee->payComponents()
-            ->where('is_active', true)
-            ->with('payrollComponent')
-            ->get()
-            ->filter(fn (EmployeePayComponent $a) => $a->payrollComponent && $a->payrollComponent->is_active)
-            ->sortBy(fn (EmployeePayComponent $a) => $a->payrollComponent->order)
-            ->values();
+        $assignments = static::activeAssignments($employee);
+
+        $baseSalaryOverride = null;
+        $contract = $employee->latestContract;
+
+        if ($contract
+            && $contract->salary_mode === Contract::SALARY_MODE_NET
+            && $contract->net_salary_target !== null
+            && $assignments->contains(fn (EmployeePayComponent $a) => $a->payrollComponent->is_base_salary)
+        ) {
+            $baseSalaryOverride = static::solveGrossForNetUsingAssignments($assignments, (float) $contract->net_salary_target);
+        }
 
         // A plain firstOrNew(['period' => ...]) would compare against the raw
         // stored value, which Eloquent's date cast serializes as a full
@@ -147,30 +160,16 @@ class Payslip extends Model
 
         abort_if($payslip->exists && $payslip->status === self::STATUS_VALIDATED, 400, 'Ce bulletin est déjà validé et ne peut plus être recalculé.');
 
-        $values = [];
-        $gross = 0.0;
+        [$values, $gross, $deductions, $employerCharges] = static::computeAmounts($assignments, $baseSalaryOverride);
 
-        foreach ($assignments as $assignment) {
-            if ($assignment->payrollComponent->type === PayrollComponent::TYPE_GAIN) {
-                $amount = $assignment->payrollComponent->computeAmount($assignment, $values, 0.0);
-                $values[$assignment->payroll_component_id] = $amount;
-                $gross += $amount;
-            }
-        }
-
-        $deductions = 0.0;
-        $employerCharges = 0.0;
-
-        foreach ($assignments as $assignment) {
-            if ($assignment->payrollComponent->type === PayrollComponent::TYPE_DEDUCTION) {
-                $amount = $assignment->payrollComponent->computeAmount($assignment, $values, $gross);
-                $values[$assignment->payroll_component_id] = $amount;
-                $deductions += $amount;
-            } elseif ($assignment->payrollComponent->type === PayrollComponent::TYPE_EMPLOYER_CHARGE) {
-                $amount = $assignment->payrollComponent->computeAmount($assignment, $values, $gross);
-                $values[$assignment->payroll_component_id] = $amount;
-                $employerCharges += $amount;
-            }
+        if ($baseSalaryOverride !== null) {
+            // Keep the assigned "Salaire de base" rubrique and the contract's
+            // displayed gross in sync with the resolved value, so both remain
+            // accurate outside of payslip generation too (payroll tab,
+            // document templates using {{contrat.salaire_base}}).
+            $baseAssignment = $assignments->first(fn (EmployeePayComponent $a) => $a->payrollComponent->is_base_salary);
+            $baseAssignment->update(['amount' => round($baseSalaryOverride, 2)]);
+            $contract->update(['base_salary' => round($baseSalaryOverride, 2)]);
         }
 
         $payslip->fill([
@@ -214,6 +213,121 @@ class Payslip extends Model
         ]);
 
         return $payslip;
+    }
+
+    /**
+     * An employee's currently active, in-order pay component assignments —
+     * the same set generateFor() builds a payslip from.
+     */
+    private static function activeAssignments(Employee $employee): Collection
+    {
+        return $employee->payComponents()
+            ->where('is_active', true)
+            ->with('payrollComponent')
+            ->get()
+            ->filter(fn (EmployeePayComponent $a) => $a->payrollComponent && $a->payrollComponent->is_active)
+            ->sortBy(fn (EmployeePayComponent $a) => $a->payrollComponent->order)
+            ->values();
+    }
+
+    /**
+     * Pure (non-persisting) two-pass computation of gain/deduction/employer-
+     * charge amounts for a set of assignments — the same logic generateFor()
+     * applies, factored out so it can also be run repeatedly, in-memory, by
+     * solveGrossForNetUsingAssignments() without touching the database.
+     *
+     * @return array{0: array<int, float>, 1: float, 2: float, 3: float} [values, gross, deductions, employerCharges]
+     */
+    private static function computeAmounts(Collection $assignments, ?float $baseSalaryOverride = null): array
+    {
+        $values = [];
+        $gross = 0.0;
+
+        foreach ($assignments as $assignment) {
+            if ($assignment->payrollComponent->type !== PayrollComponent::TYPE_GAIN) {
+                continue;
+            }
+
+            $amount = $baseSalaryOverride !== null && $assignment->payrollComponent->is_base_salary
+                ? round($baseSalaryOverride, 2)
+                : $assignment->payrollComponent->computeAmount($assignment, $values, 0.0);
+
+            $values[$assignment->payroll_component_id] = $amount;
+            $gross += $amount;
+        }
+
+        $deductions = 0.0;
+        $employerCharges = 0.0;
+
+        foreach ($assignments as $assignment) {
+            if ($assignment->payrollComponent->type === PayrollComponent::TYPE_DEDUCTION) {
+                $amount = $assignment->payrollComponent->computeAmount($assignment, $values, $gross);
+                $values[$assignment->payroll_component_id] = $amount;
+                $deductions += $amount;
+            } elseif ($assignment->payrollComponent->type === PayrollComponent::TYPE_EMPLOYER_CHARGE) {
+                $amount = $assignment->payrollComponent->computeAmount($assignment, $values, $gross);
+                $values[$assignment->payroll_component_id] = $amount;
+                $employerCharges += $amount;
+            }
+        }
+
+        return [$values, $gross, $deductions, $employerCharges];
+    }
+
+    /**
+     * The gross "Salaire de base" that makes gross - deductions equal
+     * $targetNet, for an employee's currently assigned pay components.
+     *
+     * Solved by bisection rather than algebraically: deduction rules
+     * (percentage-of-gross, percentage-of-component, ceilings) make net a
+     * non-decreasing but not necessarily linear function of the base salary,
+     * so bisection stays correct however those rules evolve, without needing
+     * to invert each calculation method by hand.
+     */
+    public static function solveGrossForNet(Employee $employee, float $targetNet): float
+    {
+        return static::solveGrossForNetUsingAssignments(static::activeAssignments($employee), $targetNet);
+    }
+
+    private static function solveGrossForNetUsingAssignments(Collection $assignments, float $targetNet): float
+    {
+        // No "Salaire de base" rubrique assigned yet (e.g. the contract is
+        // being saved before pay components are set up) — there is nothing
+        // for the override to attach to, so a base salary above this couldn't
+        // ever move the computed gross. Assume zero deductions as a starting
+        // value; it self-corrects once the rubrique is assigned and a payslip
+        // is generated.
+        if (! $assignments->contains(fn (EmployeePayComponent $a) => $a->payrollComponent->is_base_salary)) {
+            return round($targetNet, 2);
+        }
+
+        $netFor = function (float $base) use ($assignments) {
+            [, $gross, $deductions] = static::computeAmounts($assignments, $base);
+
+            return $gross - $deductions;
+        };
+
+        $low = 0.0;
+        $high = max($targetNet * 1.5, 1.0);
+
+        // Net can never exceed gross (deductions are never negative), so this
+        // always terminates once $high itself is large enough to be the base
+        // salary — i.e. when even zero deductions would already clear the target.
+        while ($netFor($high) < $targetNet && $high < 1_000_000_000) {
+            $high *= 2;
+        }
+
+        for ($i = 0; $i < 60; $i++) {
+            $mid = ($low + $high) / 2;
+
+            if ($netFor($mid) < $targetNet) {
+                $low = $mid;
+            } else {
+                $high = $mid;
+            }
+        }
+
+        return round($high, 2);
     }
 
     /**

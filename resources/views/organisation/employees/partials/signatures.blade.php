@@ -8,14 +8,18 @@
     @endcan
 </div>
 
-<div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+<x-data-table>
     <table class="min-w-full divide-y divide-line">
         <thead class="bg-surface-2">
             <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Titre</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Généré le</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Signé le</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Titre</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Généré le</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Signé le</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Statut</th>
                 <th class="px-4 py-2"></th>
             </tr>
         </thead>
@@ -26,8 +30,11 @@
                 @endphp
                 <tr>
                     <td class="px-4 py-3 text-sm font-medium text-fg">{{ $generatedDocument->title }}</td>
-                    <td class="px-4 py-3 text-sm text-muted">{{ $generatedDocument->created_at->format('d/m/Y') }}</td>
-                    <td class="px-4 py-3 text-sm text-muted">
+                    <td class="px-4 py-3 text-sm text-muted"
+                        data-sort-value="{{ $generatedDocument->created_at->timestamp }}">
+                        {{ $generatedDocument->created_at->format('d/m/Y à H:i') }}</td>
+                    <td class="px-4 py-3 text-sm text-muted"
+                        data-sort-value="{{ $generatedDocument->signed_at?->timestamp ?? 0 }}">
                         {{ $generatedDocument->signed_at?->format('d/m/Y à H:i') ?? '—' }}</td>
                     <td class="px-4 py-3 text-sm">
                         <x-status-chip :tone="$tones[$generatedDocument->status] ?? 'neutral'">
@@ -48,7 +55,7 @@
                             @if ($generatedDocument->status === 'pending')
                                 <form method="POST"
                                     action="{{ route('organisation.employees.document-requests.destroy', [$employee, $generatedDocument]) }}"
-                                    class="inline" onsubmit="return confirm('Annuler ce document ?');">
+                                    class="inline" data-confirm="Annuler ce document ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Annuler</button>
@@ -58,14 +65,14 @@
                     </td>
                 </tr>
             @empty
-                <tr>
+                <tr data-empty-row>
                     <td colspan="5" class="px-4 py-6 text-center text-sm text-muted">Aucun document généré pour cet
                         employé.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
-</div>
+</x-data-table>
 
 @can('documents.manage')
     <x-modal name="signature-generate" :show="$isGenerating" focusable>
@@ -73,6 +80,8 @@
             templateId: '{{ old('document_template_id', $documentTemplates->first()?->id) }}',
             title: '{{ old('title', '') }}',
             names: {{ $documentTemplates->pluck('name', 'id')->toJson() }},
+            templatesFields: {{ Illuminate\Support\Js::from($documentTemplates->mapWithKeys(fn($t) => [(string) $t->id => $t->fields ?? []])) }},
+            get selectedFields() { return this.templatesFields[this.templateId] ?? []; },
         }" x-init="if (!title && names[templateId]) title = names[templateId] + ' — {{ $employee->full_name }}'">
             <form method="POST" action="{{ route('organisation.employees.document-requests.store', $employee) }}"
                 class="p-6">
@@ -100,6 +109,26 @@
                         <x-text-input name="title" id="signature_title" x-model="title" class="mt-1" />
                         <x-input-error :messages="$isGenerating ? $errors->get('title') : []" class="mt-2" />
                     </div>
+
+                    <template x-for="field in selectedFields" :key="field.key">
+                        <div>
+                            <label class="block text-sm font-medium text-fg"
+                                x-text="field.label + (field.required ? ' *' : '')"></label>
+                            <template x-if="field.type === 'textarea'">
+                                <textarea :name="`field_values[${field.key}]`" :required="field.required" rows="3"
+                                    class="mt-1 block w-full rounded-lg border-line bg-surface text-sm text-fg shadow-sm focus:border-brand focus:ring-brand"></textarea>
+                            </template>
+                            <template x-if="field.type !== 'textarea'">
+                                <input :type="field.type === 'number' ? 'number' : 'text'"
+                                    :name="`field_values[${field.key}]`" :required="field.required"
+                                    class="mt-1 block w-full rounded-lg border-line bg-surface text-sm text-fg shadow-sm focus:border-brand focus:ring-brand">
+                            </template>
+                        </div>
+                    </template>
+
+                    @if ($isGenerating && $errors->has('field_values.*'))
+                        <x-input-error :messages="$errors->get('field_values.*')" />
+                    @endif
                 </div>
 
                 <div class="mt-6 flex justify-end">
@@ -123,7 +152,7 @@
                     </svg>
                 </button>
             </div>
-            <div class="prose prose-sm max-w-none rounded-lg border border-line-soft bg-surface-2 p-6 text-fg"
+            <div class="document-content prose prose-sm max-w-none rounded-lg border border-line-soft bg-surface-2 p-6 text-fg"
                 style="max-height: 65vh; overflow-y: auto;">
                 @include('pdf.partials.header')
                 {!! $generatedDocument->content !!}

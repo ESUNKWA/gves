@@ -7,29 +7,18 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="mb-4 p-3 rounded-lg bg-danger-soft text-danger text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nom</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Catégorie
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Utilisé
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Nom</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Catégorie</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Utilisé</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -55,7 +44,7 @@
 
                             @if ($template->generated_documents_count === 0)
                                 <form method="POST" action="{{ route('documents.templates.destroy', $template) }}"
-                                    class="inline" onsubmit="return confirm('Supprimer ce gabarit ?');">
+                                    class="inline" data-confirm="Supprimer ce gabarit ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -64,14 +53,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="5" class="px-6 py-8 text-center text-sm text-muted">Aucun gabarit pour le
                             moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 
     <x-modal name="template-create" :show="old('_modal') === 'template-create'" focusable maxWidth="4xl">
         <form method="POST" action="{{ route('documents.templates.store') }}" class="p-6">

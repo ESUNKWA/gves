@@ -8,7 +8,7 @@
             </a>
             @if ($isDraft)
                 <form method="POST" action="{{ route('payroll.payslips.recalculate', $payslip) }}"
-                    onsubmit="return confirm('Recalculer depuis la structure de rémunération ? Les lignes manuelles seront conservées, les lignes issues des rubriques seront remplacées.');">
+                    data-confirm="Recalculer depuis la structure de rémunération ? Les lignes manuelles seront conservées, les lignes issues des rubriques seront remplacées.">
                     @csrf
                     <x-secondary-button type="submit">{{ __('Recalculer') }}</x-secondary-button>
                 </form>
@@ -22,27 +22,22 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
     <div class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
         <x-stat-card label="Brut" :value="number_format($payslip->gross_amount, 0, ',', ' ')" />
         <x-stat-card label="Retenues" :value="number_format($payslip->deductions_amount, 0, ',', ' ')" />
         <x-stat-card label="Net à payer" :value="number_format($payslip->net_amount, 0, ',', ' ')" />
     </div>
 
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden mb-6">
+    <x-data-table :per-page="25">
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Rubrique
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Type
-                    </th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">Montant
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Rubrique</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Type</th>
+                    <th data-sort class="px-6 py-3 text-right text-xs font-medium text-muted uppercase tracking-wider">
+                        Montant
                     </th>
                 </tr>
             </thead>
@@ -59,17 +54,17 @@
                                 {{ $line->type === 'gain' ? 'Gain' : 'Retenue' }}
                             </x-status-chip>
                         </td>
-                        <td class="px-6 py-4 text-right text-sm text-fg">
+                        <td class="px-6 py-4 text-right text-sm text-fg" data-sort-value="{{ $line->amount }}">
                             {{ number_format($line->amount, 0, ',', ' ') }}</td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="3" class="px-6 py-8 text-center text-sm text-muted">Aucune ligne.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 
     @if ($isDraft)
         <div class="rounded-xl border border-line-soft bg-surface shadow-card p-6">
@@ -102,7 +97,7 @@
         </div>
 
         <form method="POST" action="{{ route('payroll.payslips.destroy', $payslip) }}" class="mt-6"
-            onsubmit="return confirm('Supprimer ce bulletin brouillon ?');">
+            data-confirm="Supprimer ce bulletin brouillon ?">
             @csrf
             @method('DELETE')
             <x-danger-button type="submit">{{ __('Supprimer ce bulletin') }}</x-danger-button>

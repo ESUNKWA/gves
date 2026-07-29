@@ -15,7 +15,7 @@ class UserController extends Controller
     public function index(): View
     {
         return view('administration.users.index', [
-            'users' => User::with('employee')->orderBy('name')->paginate(15),
+            'users' => User::with('employee')->orderBy('name')->get(),
             'roles' => Role::orderBy('name')->pluck('name'),
             'roleLabels' => $this->roleLabels(),
         ]);
@@ -40,6 +40,7 @@ class UserController extends Controller
             'super-admin' => 'Super administrateur',
             'rh-admin' => 'Administrateur RH',
             'manager' => 'Manager',
+            'direction' => 'Direction',
             'employe' => 'Employé',
         ];
     }

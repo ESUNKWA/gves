@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Portal;
 
+use App\Http\Controllers\Controller;
 use App\Models\CompanySetting;
 use App\Models\DocumentTemplate;
 use App\Models\EmployeeDocument;
 use App\Models\GeneratedDocument;
-use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +21,7 @@ class DocumentSignatureController extends Controller
 
         abort_unless($generatedDocument->employee_id === $employee->id, 404);
         abort_unless($generatedDocument->status === GeneratedDocument::STATUS_PENDING, 400);
+        abort_if($generatedDocument->approvals()->exists(), 400, 'Ce document suit un circuit de validation dédié.');
 
         return view('portal.documents.sign', [
             'generatedDocument' => $generatedDocument,
@@ -34,6 +35,7 @@ class DocumentSignatureController extends Controller
 
         abort_unless($generatedDocument->employee_id === $employee->id, 404);
         abort_unless($generatedDocument->status === GeneratedDocument::STATUS_PENDING, 400);
+        abort_if($generatedDocument->approvals()->exists(), 400, 'Ce document suit un circuit de validation dédié.');
 
         $data = $request->validate([
             'signature_data' => 'required|string|starts_with:data:image/png;base64,',

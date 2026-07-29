@@ -30,8 +30,7 @@ class LeaveRequestController extends Controller
             ->when($status, fn ($q) => $q->where('status', $status))
             ->orderByRaw("status = 'pending' desc")
             ->latest('start_date')
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         return view('leaves.requests.index', [
             'leaveRequests' => $leaveRequests,

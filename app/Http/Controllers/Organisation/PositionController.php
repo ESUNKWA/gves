@@ -5,28 +5,23 @@ namespace App\Http\Controllers\Organisation;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Position;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class PositionController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): View
     {
         $positions = Position::query()
             ->with('department')
             ->withCount('employees')
-            ->when($request->string('search')->toString(), function ($query, $search) {
-                $query->where('title', 'like', "%{$search}%");
-            })
             ->orderBy('title')
-            ->paginate(10)
-            ->withQueryString();
+            ->get();
 
         return view('organisation.positions.index', [
             'positions' => $positions,
-            'search' => $request->string('search')->toString(),
             'departments' => Department::orderBy('name')->get(),
         ]);
     }

@@ -5,28 +5,22 @@ namespace App\Http\Controllers\Organisation;
 use App\Http\Controllers\Controller;
 use App\Models\Country;
 use App\Models\Site;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class SiteController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): View
     {
         $sites = Site::query()
-            ->when($request->string('search')->toString(), function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            })
             ->withCount('employees')
             ->orderBy('name')
-            ->paginate(10)
-            ->withQueryString();
+            ->get();
 
         return view('organisation.sites.index', [
             'sites' => $sites,
-            'search' => $request->string('search')->toString(),
         ]);
     }
 

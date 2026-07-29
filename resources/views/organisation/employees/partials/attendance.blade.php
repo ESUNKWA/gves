@@ -51,17 +51,22 @@
     @endcan
 </div>
 
-<div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+<x-data-table>
     <table class="min-w-full divide-y divide-line">
         <thead class="bg-surface-2">
             <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Date</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Arrivée</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Départ</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Travaillé
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Date
                 </th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Retard</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Source</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Arrivée</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Départ</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Travaillé</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Retard</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Source</th>
                 <th class="px-4 py-2"></th>
             </tr>
         </thead>
@@ -69,7 +74,8 @@
             @forelse ($timeEntries as $entry)
                 @php $late = $entry->lateMinutes($employee->workSchedule); @endphp
                 <tr>
-                    <td class="px-4 py-3 text-sm font-medium text-fg">{{ $entry->date->format('d/m/Y') }}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-fg" data-sort-value="{{ $entry->date->timestamp }}">
+                        {{ $entry->date->format('d/m/Y') }}</td>
                     <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_in?->format('H:i') ?? '—' }}</td>
                     <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_out?->format('H:i') ?? '—' }}</td>
                     <td class="px-4 py-3 text-sm text-muted">
@@ -87,7 +93,7 @@
                         @can('employees.manage')
                             <form method="POST"
                                 action="{{ route('organisation.employees.time-entries.destroy', [$employee, $entry]) }}"
-                                class="inline" onsubmit="return confirm('Supprimer ce pointage ?');">
+                                class="inline" data-confirm="Supprimer ce pointage ?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -96,13 +102,13 @@
                     </td>
                 </tr>
             @empty
-                <tr>
+                <tr data-empty-row>
                     <td colspan="7" class="px-4 py-6 text-center text-sm text-muted">Aucun pointage enregistré.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
-</div>
+</x-data-table>
 
 @can('employees.manage')
     <x-modal name="time-entry-schedule" :show="$isEditingSchedule" focusable maxWidth="4xl">

@@ -5,11 +5,7 @@
 <x-app-layout>
     <x-page-header :title="__('Mon pointage')" :description="__('Pointez votre arrivée et votre départ, et suivez vos heures.')" />
 
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
+    <x-portal-tabs />
 
     <div class="rounded-xl border border-line-soft bg-surface shadow-card p-6 mb-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
@@ -58,25 +54,28 @@
         <x-stat-card label="Heures supplémentaires (ce mois)" :value="$formatMinutes($monthOvertimeMinutes)" />
     </div>
 
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Date</th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Arrivée
-                    </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Départ
-                    </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Travaillé
-                    </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Retard
-                    </th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Date</th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Arrivée</th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Départ</th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Travaillé</th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Retard</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-line">
                 @forelse ($recentEntries as $entry)
                     <tr>
-                        <td class="px-4 py-3 text-sm font-medium text-fg">{{ $entry->date->format('d/m/Y') }}</td>
+                        <td class="px-4 py-3 text-sm font-medium text-fg"
+                            data-sort-value="{{ $entry->date->timestamp }}">
+                            {{ $entry->date->format('d/m/Y') }}</td>
                         <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_in?->format('H:i') ?? '—' }}</td>
                         <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_out?->format('H:i') ?? '—' }}</td>
                         <td class="px-4 py-3 text-sm text-muted">
@@ -92,12 +91,12 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="5" class="px-4 py-6 text-center text-sm text-muted">Aucun pointage sur les 14
                             derniers jours.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 </x-app-layout>

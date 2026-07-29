@@ -22,7 +22,19 @@ class CompanySetting extends Model
         'tax_id',
         'social_security_number',
         'collective_agreement',
+        'onboarding_enabled',
+        'onboarding_starts_at',
+        'onboarding_ends_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'onboarding_enabled' => 'boolean',
+            'onboarding_starts_at' => 'datetime',
+            'onboarding_ends_at' => 'datetime',
+        ];
+    }
 
     protected static function booted(): void
     {
@@ -39,7 +51,15 @@ class CompanySetting extends Model
      */
     public static function current(): self
     {
-        return static::firstOrCreate(['id' => 1], ['name' => config('app.name', 'SIRH')]);
+        // Explicitly setting onboarding_enabled here (rather than relying on
+        // the migration's column default) matters: Eloquent doesn't refetch
+        // a model after an insert, so a freshly-created row would otherwise
+        // read as onboarding_enabled === null (falsy) in this same request
+        // even though the DB itself stored true.
+        return static::firstOrCreate(['id' => 1], [
+            'name' => config('app.name', 'SIRH'),
+            'onboarding_enabled' => true,
+        ]);
     }
 
     public function logoUrl(): ?string
@@ -88,5 +108,50 @@ class CompanySetting extends Model
         [$r, $g, $b] = sscanf($hex, '%02x%02x%02x');
 
         return "{$r} {$g} {$b}";
+    }
+
+    /**
+     * Whether the public onboarding link (/rejoindre) currently accepts
+     * submissions: the switch must be on, and — if set — now must fall
+     * within the configured activation window.
+     */
+    public function isOnboardingOpen(): bool
+    {
+        if (! $this->onboarding_enabled) {
+            return false;
+        }
+
+        if ($this->onboarding_starts_at && now()->lt($this->onboarding_starts_at)) {
+            return false;
+        }
+
+        if ($this->onboarding_ends_at && now()->gt($this->onboarding_ends_at)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Human label for the current state of the onboarding link, for display
+     * in the RH review queue (distinguishes "off", "scheduled for later",
+     * "expired", and "open" even though the first two both resolve to
+     * isOnboardingOpen() === false).
+     */
+    public function onboardingStatusLabel(): string
+    {
+        if (! $this->onboarding_enabled) {
+            return 'Désactivé';
+        }
+
+        if ($this->onboarding_starts_at && now()->lt($this->onboarding_starts_at)) {
+            return 'Programmé';
+        }
+
+        if ($this->onboarding_ends_at && now()->gt($this->onboarding_ends_at)) {
+            return 'Expiré';
+        }
+
+        return 'Actif';
     }
 }

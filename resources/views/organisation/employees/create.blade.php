@@ -49,6 +49,19 @@
                     </div>
 
                     <div>
+                        <x-input-label for="birth_place" value="Lieu de naissance" />
+                        <x-text-input name="birth_place" id="birth_place" value="{{ old('birth_place') }}"
+                            class="mt-1" />
+                        <x-input-error :messages="$errors->get('birth_place')" class="mt-2" />
+                    </div>
+
+                    <div>
+                        <x-input-label for="nationality" value="Nationalité" />
+                        <x-country-select name="nationality" id="nationality" :selected="old('nationality')" class="mt-1" />
+                        <x-input-error :messages="$errors->get('nationality')" class="mt-2" />
+                    </div>
+
+                    <div>
                         <x-input-label for="national_id" value="N° pièce d'identité" />
                         <x-text-input name="national_id" id="national_id" value="{{ old('national_id') }}"
                             class="mt-1" />

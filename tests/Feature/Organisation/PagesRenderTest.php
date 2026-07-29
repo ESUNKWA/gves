@@ -77,6 +77,7 @@ class PagesRenderTest extends TestCase
             'portal.payslips.index',
             'administration.holidays.index',
             'reports.dashboard',
+            'organisation.employees.onboarding-requests.index',
         ];
 
         foreach ($routes as $route) {
@@ -91,7 +92,7 @@ class PagesRenderTest extends TestCase
     {
         $this->get('/')->assertOk();
 
-        $routes = ['login', 'register', 'password.request'];
+        $routes = ['login', 'login.personnel', 'register', 'password.request', 'onboarding.create', 'onboarding.thanks'];
 
         foreach ($routes as $route) {
             $this->get(route($route))->assertOk();

@@ -1,20 +1,16 @@
 <x-app-layout>
     <x-page-header :title="__('Utilisateurs & rôles')" :description="__('Gérez le rôle de chaque compte utilisateur.')" />
 
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nom</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Email
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Rôle</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Nom</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Email</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Rôle</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -44,18 +40,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="4" class="px-6 py-8 text-center text-sm text-muted">Aucun utilisateur pour le
                             moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $users->links() }}
-    </div>
+    </x-data-table>
 
     @foreach ($users as $user)
         @continue($user->id === auth()->id())

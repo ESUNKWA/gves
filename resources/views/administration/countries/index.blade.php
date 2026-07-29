@@ -7,19 +7,14 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nom</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Nom</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -39,7 +34,7 @@
                                 x-on:click="$dispatch('open-modal', 'country-edit-{{ $country->id }}')"
                                 class="text-brand hover:underline">Modifier</button>
                             <form method="POST" action="{{ route('administration.countries.destroy', $country) }}"
-                                class="inline" onsubmit="return confirm('Supprimer ce pays ?');">
+                                class="inline" data-confirm="Supprimer ce pays ?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -47,14 +42,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="3" class="px-6 py-8 text-center text-sm text-muted">Aucun pays pour le moment.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 
     <x-modal name="country-create" :show="old('_modal') === 'country-create'" focusable>
         <form method="POST" action="{{ route('administration.countries.store') }}" class="p-6">

@@ -33,13 +33,16 @@
     </form>
 @endcan
 
-<div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+<x-data-table>
     <table class="min-w-full divide-y divide-line">
         <thead class="bg-surface-2">
             <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Titre</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Catégorie</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Ajouté le</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Titre</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Catégorie</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Ajouté le</th>
                 <th class="px-4 py-2"></th>
             </tr>
         </thead>
@@ -49,7 +52,9 @@
                     <td class="px-4 py-3 text-sm font-medium text-fg">{{ $document->title }}</td>
                     <td class="px-4 py-3 text-sm text-muted">
                         {{ $documentCategories[$document->category] ?? $document->category }}</td>
-                    <td class="px-4 py-3 text-sm text-muted">{{ $document->uploaded_at?->format('d/m/Y') }}</td>
+                    <td class="px-4 py-3 text-sm text-muted"
+                        data-sort-value="{{ $document->uploaded_at?->timestamp ?? 0 }}">
+                        {{ $document->uploaded_at?->format('d/m/Y à H:i') }}</td>
                     <td class="px-4 py-3 text-right text-sm space-x-3">
                         <button type="button" x-data
                             x-on:click="$dispatch('open-modal', 'view-document-{{ $document->id }}')"
@@ -59,7 +64,7 @@
                         @can('employees.manage')
                             <form method="POST"
                                 action="{{ route('organisation.employees.documents.destroy', [$employee, $document]) }}"
-                                class="inline" onsubmit="return confirm('Supprimer ce document ?');">
+                                class="inline" data-confirm="Supprimer ce document ?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -68,13 +73,13 @@
                     </td>
                 </tr>
             @empty
-                <tr>
+                <tr data-empty-row>
                     <td colspan="4" class="px-4 py-6 text-center text-sm text-muted">Aucun document.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
-</div>
+</x-data-table>
 
 @foreach ($documents as $document)
     <x-modal name="view-document-{{ $document->id }}" maxWidth="4xl">
@@ -88,7 +93,9 @@
                 </button>
             </div>
             <iframe
-                :src="show ? '{{ route('organisation.employees.documents.view', [$employee, $document]) }}#toolbar=0&navpanes=0' : ''"
+                :src="show ?
+                    '{{ route('organisation.employees.documents.view', [$employee, $document]) }}#toolbar=0&navpanes=0' :
+                    ''"
                 class="w-full rounded-lg border border-line-soft bg-surface-2" style="height: 75vh;"></iframe>
         </div>
     </x-modal>

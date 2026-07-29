@@ -37,6 +37,32 @@ class AuthenticationTest extends TestCase
         $this->assertAuthenticated();
     }
 
+    public function test_personnel_login_screen_can_be_rendered(): void
+    {
+        $response = $this->get('/personnel/connexion');
+
+        $response
+            ->assertOk()
+            ->assertSeeVolt('pages.auth.login-personnel');
+    }
+
+    public function test_users_can_authenticate_using_the_personnel_login_screen(): void
+    {
+        $user = User::factory()->create();
+
+        $component = Volt::test('pages.auth.login-personnel')
+            ->set('form.email', $user->email)
+            ->set('form.password', 'password');
+
+        $component->call('login');
+
+        $component
+            ->assertHasNoErrors()
+            ->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertAuthenticated();
+    }
+
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();

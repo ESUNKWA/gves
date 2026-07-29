@@ -6,11 +6,7 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
+    <x-portal-tabs />
 
     <div class="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-2 lg:grid-cols-3">
         @foreach ($leaveBalances as $balance)
@@ -31,17 +27,18 @@
         @endforeach
     </div>
 
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Type</th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Période
-                    </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Jours
-                    </th>
-                    <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut
-                    </th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Type</th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Période</th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Jours</th>
+                    <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-4 py-2"></th>
                 </tr>
             </thead>
@@ -57,7 +54,8 @@
                     @endphp
                     <tr>
                         <td class="px-4 py-3 text-sm font-medium text-fg">{{ $leaveRequest->leaveType->name }}</td>
-                        <td class="px-4 py-3 text-sm text-muted">
+                        <td class="px-4 py-3 text-sm text-muted"
+                            data-sort-value="{{ $leaveRequest->start_date->timestamp }}">
                             {{ $leaveRequest->start_date->format('d/m/Y') }} —
                             {{ $leaveRequest->end_date->format('d/m/Y') }}
                         </td>
@@ -74,7 +72,7 @@
                         <td class="px-4 py-3 text-right text-sm">
                             @if ($leaveRequest->status === 'pending')
                                 <form method="POST" action="{{ route('portal.leaves.destroy', $leaveRequest) }}"
-                                    class="inline" onsubmit="return confirm('Annuler cette demande ?');">
+                                    class="inline" data-confirm="Annuler cette demande ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Annuler</button>
@@ -83,14 +81,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="5" class="px-4 py-6 text-center text-sm text-muted">Aucune demande de congé.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 
     <x-modal name="my-leave-create" :show="$errors->isNotEmpty()" focusable>
         <form method="POST" action="{{ route('portal.leaves.store') }}" class="p-6">

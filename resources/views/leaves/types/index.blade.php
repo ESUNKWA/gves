@@ -9,30 +9,20 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    @if (session('error'))
-        <div class="mb-4 p-3 rounded-lg bg-danger-soft text-danger text-sm">
-            {{ session('error') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nom</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Acquisition
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Rémunéré
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Approbation
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Nom</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Acquisition</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Rémunéré</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Approbation</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -69,7 +59,7 @@
 
                                 @if ($leaveType->leave_requests_count === 0 && $leaveType->leave_balances_count === 0)
                                     <form method="POST" action="{{ route('leaves.types.destroy', $leaveType) }}"
-                                        class="inline" onsubmit="return confirm('Supprimer ce type de congé ?');">
+                                        class="inline" data-confirm="Supprimer ce type de congé ?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -79,14 +69,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="6" class="px-6 py-8 text-center text-sm text-muted">Aucun type de congé pour le
                             moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 
     <x-modal name="leave-type-create" :show="old('_modal') === 'leave-type-create'" focusable>
         <form method="POST" action="{{ route('leaves.types.store') }}" class="p-6">

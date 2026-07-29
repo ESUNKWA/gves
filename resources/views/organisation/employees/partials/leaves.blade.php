@@ -27,14 +27,18 @@
     @endforeach
 </div>
 
-<div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+<x-data-table>
     <table class="min-w-full divide-y divide-line">
         <thead class="bg-surface-2">
             <tr>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Type</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Période</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Jours</th>
-                <th class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">Type
+                </th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Période</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Jours</th>
+                <th data-sort class="px-4 py-2 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    Statut</th>
                 <th class="px-4 py-2"></th>
             </tr>
         </thead>
@@ -50,7 +54,8 @@
                 @endphp
                 <tr>
                     <td class="px-4 py-3 text-sm font-medium text-fg">{{ $leaveRequest->leaveType->name }}</td>
-                    <td class="px-4 py-3 text-sm text-muted">
+                    <td class="px-4 py-3 text-sm text-muted"
+                        data-sort-value="{{ $leaveRequest->start_date->timestamp }}">
                         {{ $leaveRequest->start_date->format('d/m/Y') }} —
                         {{ $leaveRequest->end_date->format('d/m/Y') }}
                     </td>
@@ -66,7 +71,7 @@
                             @if ($leaveRequest->status === 'pending')
                                 <form method="POST"
                                     action="{{ route('organisation.employees.leave-requests.destroy', [$employee, $leaveRequest]) }}"
-                                    class="inline" onsubmit="return confirm('Supprimer cette demande ?');">
+                                    class="inline" data-confirm="Supprimer cette demande ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -76,13 +81,13 @@
                     </td>
                 </tr>
             @empty
-                <tr>
+                <tr data-empty-row>
                     <td colspan="5" class="px-4 py-6 text-center text-sm text-muted">Aucune demande de congé.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
-</div>
+</x-data-table>
 
 @can('employees.manage')
     <x-modal name="leave-create" :show="$isCreatingLeave" focusable>

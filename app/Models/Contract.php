@@ -62,6 +62,18 @@ class Contract extends Model
         ];
     }
 
+    public const SALARY_MODE_GROSS = 'gross';
+
+    public const SALARY_MODE_NET = 'net';
+
+    public static function salaryModes(): array
+    {
+        return [
+            self::SALARY_MODE_GROSS => 'Brut',
+            self::SALARY_MODE_NET => 'Net',
+        ];
+    }
+
     protected $fillable = [
         'employee_id',
         'contract_type',
@@ -70,6 +82,8 @@ class Contract extends Model
         'end_date',
         'trial_end_date',
         'base_salary',
+        'salary_mode',
+        'net_salary_target',
         'currency',
         'working_hours_per_week',
         'status',
@@ -86,6 +100,7 @@ class Contract extends Model
             'trial_end_date' => 'date',
             'signed_at' => 'datetime',
             'base_salary' => 'decimal:2',
+            'net_salary_target' => 'decimal:2',
         ];
     }
 

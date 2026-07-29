@@ -29,6 +29,7 @@ class DocumentRequest extends Model
         'employee_id',
         'document_template_id',
         'reason',
+        'field_values',
         'status',
         'generated_document_id',
         'decided_by',
@@ -39,6 +40,7 @@ class DocumentRequest extends Model
     protected function casts(): array
     {
         return [
+            'field_values' => 'array',
             'decided_at' => 'datetime',
         ];
     }

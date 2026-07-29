@@ -64,4 +64,11 @@ new #[Layout('layouts.guest')] class extends Component {
             {{ __('Se connecter') }}
         </x-primary-button>
     </form>
+
+    <p class="mt-6 text-center text-sm text-muted">
+        {{ __('Vous êtes un employé ?') }}
+        <a href="{{ route('login.personnel') }}" wire:navigate class="font-medium text-brand hover:text-brand">
+            {{ __('Accédez à votre espace personnel') }}
+        </a>
+    </p>
 </div>

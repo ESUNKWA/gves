@@ -2,8 +2,9 @@
 
 use App\Http\Controllers\Administration\CompanySettingsController;
 use App\Http\Controllers\Administration\CountryController;
-use App\Http\Controllers\Administration\UserController;
 use App\Http\Controllers\Administration\HolidayController;
+use App\Http\Controllers\Administration\UserController;
+use App\Http\Controllers\ApprovalController;
 use App\Http\Controllers\Attendance\TimeEntryController as AttendanceTimeEntryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentRequestController;
@@ -11,25 +12,27 @@ use App\Http\Controllers\Documents\DocumentTemplateController;
 use App\Http\Controllers\Documents\GeneratedDocumentController;
 use App\Http\Controllers\Leaves\LeaveRequestController;
 use App\Http\Controllers\Leaves\LeaveTypeController;
+use App\Http\Controllers\OnboardingRequestController;
 use App\Http\Controllers\Organisation\ContractController;
 use App\Http\Controllers\Organisation\ContractDownloadController;
 use App\Http\Controllers\Organisation\DepartmentController;
+use App\Http\Controllers\Organisation\EmployeeAccountController;
 use App\Http\Controllers\Organisation\EmployeeController;
 use App\Http\Controllers\Organisation\EmployeeDocumentController;
-use App\Http\Controllers\Organisation\EmployeeAccountController;
-use App\Http\Controllers\Organisation\EmployeeDocumentRequestController;
-use App\Http\Controllers\Organisation\EmployeeLeaveRequestController;
 use App\Http\Controllers\Organisation\EmployeeDocumentDownloadController;
+use App\Http\Controllers\Organisation\EmployeeDocumentRequestController;
 use App\Http\Controllers\Organisation\EmployeeDocumentViewController;
+use App\Http\Controllers\Organisation\EmployeeLeaveRequestController;
+use App\Http\Controllers\Organisation\EmployeeOnboardingRequestController;
 use App\Http\Controllers\Organisation\EmployeePayComponentController;
 use App\Http\Controllers\Organisation\EmployeeTimeEntryController;
 use App\Http\Controllers\Organisation\EmployeeWorkScheduleController;
+use App\Http\Controllers\Organisation\OnboardingSettingsController;
 use App\Http\Controllers\Organisation\PositionController;
 use App\Http\Controllers\Organisation\SiteController;
-use App\Http\Controllers\PayslipVerificationController;
 use App\Http\Controllers\Payroll\PayrollComponentController;
 use App\Http\Controllers\Payroll\PayslipController;
-use App\Http\Controllers\Reports\DashboardController as ReportsDashboardController;
+use App\Http\Controllers\PayslipVerificationController;
 use App\Http\Controllers\Portal\DocumentController as PortalDocumentController;
 use App\Http\Controllers\Portal\DocumentRequestController as PortalDocumentRequestController;
 use App\Http\Controllers\Portal\DocumentSignatureController;
@@ -37,11 +40,16 @@ use App\Http\Controllers\Portal\LeaveController as PortalLeaveController;
 use App\Http\Controllers\Portal\PayslipController as PortalPayslipController;
 use App\Http\Controllers\Portal\ProfileController as PortalProfileController;
 use App\Http\Controllers\Portal\TimeClockController;
+use App\Http\Controllers\Reports\DashboardController as ReportsDashboardController;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
 
 Route::get('verification/bulletin/{reference}', PayslipVerificationController::class)->name('verification.payslip');
+
+Route::get('rejoindre', [OnboardingRequestController::class, 'create'])->name('onboarding.create');
+Route::post('rejoindre', [OnboardingRequestController::class, 'store'])->middleware('throttle:10,1')->name('onboarding.store');
+Route::get('rejoindre/merci', [OnboardingRequestController::class, 'thanks'])->name('onboarding.thanks');
 
 Route::get('dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
@@ -106,6 +114,11 @@ Route::middleware(['auth', 'verified'])
             Route::put('employees/{employee}/work-schedule', [EmployeeWorkScheduleController::class, 'update'])->name('employees.work-schedule.update');
             Route::post('employees/{employee}/time-entries', [EmployeeTimeEntryController::class, 'store'])->name('employees.time-entries.store');
             Route::delete('employees/{employee}/time-entries/{timeEntry}', [EmployeeTimeEntryController::class, 'destroy'])->name('employees.time-entries.destroy');
+
+            Route::get('demandes-embauche', [EmployeeOnboardingRequestController::class, 'index'])->name('employees.onboarding-requests.index');
+            Route::post('demandes-embauche/{onboardingRequest}/approve', [EmployeeOnboardingRequestController::class, 'approve'])->name('employees.onboarding-requests.approve');
+            Route::post('demandes-embauche/{onboardingRequest}/reject', [EmployeeOnboardingRequestController::class, 'reject'])->name('employees.onboarding-requests.reject');
+            Route::put('demandes-embauche/parametres', [OnboardingSettingsController::class, 'update'])->name('employees.onboarding-settings.update');
         });
 
         Route::middleware('permission:documents.manage')->group(function () {
@@ -179,7 +192,8 @@ Route::middleware(['auth', 'verified', 'has-employee-profile'])
         Route::delete('documents/demandes/{documentRequest}', [PortalDocumentRequestController::class, 'destroy'])->name('document-requests.destroy');
 
         Route::get('ma-paie', [PortalPayslipController::class, 'index'])->name('payslips.index');
-        Route::get('ma-paie/{payslip}/pdf', [PortalPayslipController::class, 'pdf'])->name('payslips.pdf');
+        Route::get('ma-paie/{payslip}/voir', [PortalPayslipController::class, 'view'])->name('payslips.view');
+        Route::get('ma-paie/{payslip}/telecharger', [PortalPayslipController::class, 'download'])->name('payslips.download');
     });
 
 Route::middleware(['auth', 'verified', 'permission:administration.manage'])
@@ -215,6 +229,7 @@ Route::middleware(['auth', 'verified', 'permission:documents.manage'])
         Route::get('suivi', [GeneratedDocumentController::class, 'index'])->name('requests.index');
 
         Route::get('demandes', [DocumentRequestController::class, 'index'])->name('document-requests.index');
+        Route::get('demandes/{documentRequest}', [DocumentRequestController::class, 'show'])->name('document-requests.show');
         Route::post('demandes/{documentRequest}/approve', [DocumentRequestController::class, 'approve'])->name('document-requests.approve');
         Route::post('demandes/{documentRequest}/reject', [DocumentRequestController::class, 'reject'])->name('document-requests.reject');
     });
@@ -227,6 +242,7 @@ Route::middleware(['auth', 'verified', 'permission:payroll.manage'])
         Route::post('rubriques', [PayrollComponentController::class, 'store'])->name('components.store');
         Route::put('rubriques/{payrollComponent}', [PayrollComponentController::class, 'update'])->name('components.update');
         Route::delete('rubriques/{payrollComponent}', [PayrollComponentController::class, 'destroy'])->name('components.destroy');
+        Route::post('rubriques/{payrollComponent}/assigner', [PayrollComponentController::class, 'bulkAssign'])->name('components.bulk-assign');
 
         Route::get('bulletins', [PayslipController::class, 'index'])->name('payslips.index');
         Route::post('bulletins/lancer', [PayslipController::class, 'run'])->name('payslips.run');
@@ -246,6 +262,20 @@ Route::middleware(['auth', 'verified', 'permission:reports.view'])
         Route::get('export/effectifs', [ReportsDashboardController::class, 'exportWorkforce'])->name('export.workforce');
         Route::get('export/paie', [ReportsDashboardController::class, 'exportPayroll'])->name('export.payroll');
         Route::get('export/conges', [ReportsDashboardController::class, 'exportLeaves'])->name('export.leaves');
+    });
+
+// Unified inbox for the configurable document approval chain (manager,
+// RH, direction, payroll, requester). Eligibility is per-row and dynamic
+// (see GeneratedDocumentApproval::canBeActedOnBy()), so there's no single
+// permission to gate the whole group on — every action re-checks it.
+Route::middleware(['auth', 'verified'])
+    ->prefix('validations')
+    ->name('approvals.')
+    ->group(function () {
+        Route::get('/', [ApprovalController::class, 'index'])->name('index');
+        Route::get('{approval}', [ApprovalController::class, 'show'])->name('show');
+        Route::post('{approval}/approve', [ApprovalController::class, 'approve'])->name('approve');
+        Route::post('{approval}/reject', [ApprovalController::class, 'reject'])->name('reject');
     });
 
 require __DIR__.'/auth.php';

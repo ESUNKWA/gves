@@ -10,18 +10,20 @@
         </x-select>
     </form>
 
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employé</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Document
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Généré le
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Signé le
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employé</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Document</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Généré le</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Signé le</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-line">
@@ -35,9 +37,12 @@
                                 class="hover:underline">{{ $generatedDocument->employee->full_name }}</a>
                         </td>
                         <td class="px-6 py-4 text-sm text-muted">{{ $generatedDocument->title }}</td>
-                        <td class="px-6 py-4 text-sm text-muted">{{ $generatedDocument->created_at->format('d/m/Y') }}
+                        <td class="px-6 py-4 text-sm text-muted"
+                            data-sort-value="{{ $generatedDocument->created_at->timestamp }}">
+                            {{ $generatedDocument->created_at->format('d/m/Y à H:i') }}
                         </td>
-                        <td class="px-6 py-4 text-sm text-muted">
+                        <td class="px-6 py-4 text-sm text-muted"
+                            data-sort-value="{{ $generatedDocument->signed_at?->timestamp ?? 0 }}">
                             {{ $generatedDocument->signed_at?->format('d/m/Y à H:i') ?? '—' }}</td>
                         <td class="px-6 py-4 text-sm">
                             <x-status-chip :tone="$tones[$generatedDocument->status] ?? 'neutral'">
@@ -46,16 +51,12 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="5" class="px-6 py-8 text-center text-sm text-muted">Aucun document généré pour
                             le moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $generatedDocuments->links() }}
-    </div>
+    </x-data-table>
 </x-app-layout>

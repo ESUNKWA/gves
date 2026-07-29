@@ -10,24 +10,20 @@
         </x-select>
     </form>
 
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employé
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Période
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Jours</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employé</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Type</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Période</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Jours</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -47,7 +43,8 @@
                                 class="hover:underline">{{ $leaveRequest->employee->full_name }}</a>
                         </td>
                         <td class="px-6 py-4 text-sm text-muted">{{ $leaveRequest->leaveType->name }}</td>
-                        <td class="px-6 py-4 text-sm text-muted">
+                        <td class="px-6 py-4 text-sm text-muted"
+                            data-sort-value="{{ $leaveRequest->start_date->timestamp }}">
                             {{ $leaveRequest->start_date->format('d/m/Y') }} —
                             {{ $leaveRequest->end_date->format('d/m/Y') }}
                         </td>
@@ -61,7 +58,7 @@
                         <td class="px-6 py-4 text-right text-sm space-x-3">
                             @if ($leaveRequest->status === 'pending')
                                 <form method="POST" action="{{ route('leaves.requests.approve', $leaveRequest) }}"
-                                    class="inline" onsubmit="return confirm('Approuver cette demande ?');">
+                                    class="inline" data-confirm="Approuver cette demande ?">
                                     @csrf
                                     <button type="submit" class="text-success hover:underline">Approuver</button>
                                 </form>
@@ -74,18 +71,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="6" class="px-6 py-8 text-center text-sm text-muted">Aucune demande de congé.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $leaveRequests->links() }}
-    </div>
+    </x-data-table>
 
     @foreach ($leaveRequests as $leaveRequest)
         @if ($leaveRequest->status === 'pending')

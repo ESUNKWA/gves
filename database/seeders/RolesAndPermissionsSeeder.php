@@ -26,6 +26,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'attendance.manage',
             'payroll.manage',
             'reports.view',
+            'direction.manage',
         ];
 
         foreach ($permissions as $permission) {
@@ -53,6 +54,9 @@ class RolesAndPermissionsSeeder extends Seeder
 
         $manager = Role::findOrCreate('manager');
         $manager->syncPermissions(['organisation.view', 'employees.view']);
+
+        $direction = Role::findOrCreate('direction');
+        $direction->syncPermissions(['direction.manage']);
 
         Role::findOrCreate('employe');
     }

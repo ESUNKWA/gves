@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Organisation;
 
 use App\Http\Controllers\Controller;
 use App\Models\CompanySetting;
+use App\Models\Contract;
 use App\Models\Country;
 use App\Models\Department;
 use App\Models\DocumentTemplate;
 use App\Models\Employee;
+use App\Models\EmployeeDocument;
 use App\Models\EmployeePayComponent;
 use App\Models\GeneratedDocument;
 use App\Models\LeaveBalance;
@@ -28,23 +30,14 @@ class EmployeeController extends Controller
     {
         $employees = Employee::query()
             ->with(['site', 'department', 'position'])
-            ->when($request->string('search')->toString(), function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('employee_number', 'like', "%{$search}%");
-                });
-            })
             ->when($request->string('status')->toString(), fn ($query, $status) => $query->where('status', $status))
             ->when($request->integer('site_id'), fn ($query, $siteId) => $query->where('site_id', $siteId))
             ->when($request->integer('department_id'), fn ($query, $departmentId) => $query->where('department_id', $departmentId))
             ->orderBy('last_name')
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         return view('organisation.employees.index', [
             'employees' => $employees,
-            'search' => $request->string('search')->toString(),
             'status' => $request->string('status')->toString(),
             'site_id' => $request->integer('site_id'),
             'department_id' => $request->integer('department_id'),
@@ -81,7 +74,7 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee): View
     {
-        $employee->load(['site', 'department', 'position', 'manager']);
+        $employee->load(['site', 'department', 'position', 'manager', 'latestContract']);
 
         $year = now()->year;
         $activeLeaveTypes = LeaveType::where('is_active', true)->orderBy('name')->get();
@@ -90,10 +83,11 @@ class EmployeeController extends Controller
         return view('organisation.employees.show', [
             'employee' => $employee,
             'contracts' => $employee->contracts()->orderByDesc('start_date')->get(),
+            'positions' => Position::orderBy('title')->get(),
             'documents' => $employee->documents()->latest('uploaded_at')->get(),
-            'contractTypes' => \App\Models\Contract::types(),
-            'contractStatuses' => \App\Models\Contract::statuses(),
-            'documentCategories' => \App\Models\EmployeeDocument::categories(),
+            'contractTypes' => Contract::types(),
+            'contractStatuses' => Contract::statuses(),
+            'documentCategories' => EmployeeDocument::categories(),
             'leaveBalances' => $leaveBalances,
             'leaveTypes' => $activeLeaveTypes,
             'leaveRequests' => $employee->leaveRequests()->with('leaveType')->latest('start_date')->get(),
@@ -101,7 +95,7 @@ class EmployeeController extends Controller
             'generatedDocuments' => $employee->generatedDocuments()->latest()->get(),
             'documentTemplates' => DocumentTemplate::where('is_active', true)->orderBy('name')->get(),
             'signatureStatuses' => GeneratedDocument::statuses(),
-            'workSchedule' => $employee->workSchedule ?? new WorkSchedule(),
+            'workSchedule' => $employee->workSchedule ?? new WorkSchedule,
             'timeEntries' => $employee->timeEntries()->latest('date')->limit(30)->get(),
             'dayLabels' => WorkSchedule::dayLabels(),
             'employeePayComponents' => $employee->payComponents()->with('payrollComponent')->get()
@@ -170,6 +164,8 @@ class EmployeeController extends Controller
             'last_name' => 'required|string|max:255',
             'gender' => 'nullable|in:male,female,other',
             'birth_date' => 'nullable|date',
+            'birth_place' => 'nullable|string|max:255',
+            'nationality' => ['nullable', 'string', Rule::in(Country::options($employee?->nationality))],
             'national_id' => 'nullable|string|max:100',
             'personal_email' => 'nullable|email|max:255',
             'personal_phone' => 'nullable|string|max:50',

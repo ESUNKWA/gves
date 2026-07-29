@@ -22,13 +22,30 @@ class PayslipController extends Controller
         ]);
     }
 
-    public function pdf(Request $request, Payslip $payslip)
+    public function view(Request $request, Payslip $payslip)
+    {
+        $this->authorizeAccess($request, $payslip);
+
+        return Storage::disk('local')->response($payslip->pdf_path, $this->filename($payslip));
+    }
+
+    public function download(Request $request, Payslip $payslip)
+    {
+        $this->authorizeAccess($request, $payslip);
+
+        return Storage::disk('local')->download($payslip->pdf_path, $this->filename($payslip));
+    }
+
+    private function authorizeAccess(Request $request, Payslip $payslip): void
     {
         $employee = $request->user()->employee;
 
         abort_unless($payslip->employee_id === $employee->id, 404);
         abort_unless($payslip->status === Payslip::STATUS_VALIDATED && $payslip->pdf_path, 404);
+    }
 
-        return Storage::disk('local')->response($payslip->pdf_path, 'Bulletin-'.$payslip->period->format('Y-m').'.pdf');
+    private function filename(Payslip $payslip): string
+    {
+        return 'Bulletin-'.$payslip->period->format('Y-m').'.pdf';
     }
 }

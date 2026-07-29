@@ -69,6 +69,40 @@ class DocumentRequestTest extends TestCase
         ]);
     }
 
+    public function test_hr_can_consult_a_pending_request_before_deciding(): void
+    {
+        $employee = $this->makeEmployeeWithUser();
+        $documentRequest = $employee->documentRequests()->create([
+            'document_template_id' => $this->template->id,
+            'reason' => 'Dossier bancaire',
+            'status' => DocumentRequest::STATUS_PENDING,
+        ]);
+
+        $response = $this->actingAs($this->admin)->get(
+            route('documents.document-requests.show', $documentRequest)
+        );
+
+        $response->assertOk();
+        $response->assertSee($employee->full_name);
+        $response->assertSee('Dossier bancaire');
+        $response->assertSee('Approuver et générer le document');
+    }
+
+    public function test_a_user_without_documents_permission_cannot_consult_a_request(): void
+    {
+        $managerUser = User::factory()->create();
+        $managerUser->assignRole('manager');
+
+        $employee = $this->makeEmployeeWithUser();
+        $documentRequest = $employee->documentRequests()->create([
+            'document_template_id' => $this->template->id,
+            'status' => DocumentRequest::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($managerUser)->get(route('documents.document-requests.show', $documentRequest))
+            ->assertForbidden();
+    }
+
     public function test_employee_can_cancel_their_own_pending_request(): void
     {
         $employee = $this->makeEmployeeWithUser();

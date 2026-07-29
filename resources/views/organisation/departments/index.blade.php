@@ -9,29 +9,20 @@
         </x-slot:actions>
     </x-page-header>
 
-    <form method="GET" action="{{ route('organisation.departments.index') }}" class="mb-6 max-w-xs">
-        <x-text-input type="search" name="search" value="{{ $search }}" class="w-full"
-            placeholder="Rechercher un département..." />
-    </form>
-
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Nom</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Site</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Rattaché à
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Responsable
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employés
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Nom</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Site</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Rattaché à</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Responsable</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employés</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -51,7 +42,7 @@
                                     class="text-brand hover:underline">Modifier</button>
 
                                 <form method="POST" action="{{ route('organisation.departments.destroy', $department) }}"
-                                    class="inline" onsubmit="return confirm('Supprimer ce département ?');">
+                                    class="inline" data-confirm="Supprimer ce département ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -60,18 +51,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="6" class="px-6 py-8 text-center text-sm text-muted">Aucun département pour le
                             moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $departments->links() }}
-    </div>
+    </x-data-table>
 
     <x-modal name="department-create" :show="old('_modal') === 'department-create'" focusable>
         <form method="POST" action="{{ route('organisation.departments.store') }}" class="p-6">
@@ -146,8 +133,7 @@
 
     @foreach ($departments as $department)
         <x-modal name="department-edit-{{ $department->id }}" :show="old('_modal') === 'department-edit-'.$department->id" focusable>
-            <form method="POST" action="{{ route('organisation.departments.update', $department) }}"
-                class="p-6">
+            <form method="POST" action="{{ route('organisation.departments.update', $department) }}" class="p-6">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="_modal" value="department-edit-{{ $department->id }}">

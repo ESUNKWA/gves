@@ -1,12 +1,6 @@
 <x-app-layout>
     <x-page-header :title="__('Entreprise')" :description="__('Informations générales de votre entreprise.')" />
 
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
     <div class="max-w-3xl">
         <form method="POST" action="{{ route('administration.company.update') }}" enctype="multipart/form-data"
             class="rounded-xl border border-line-soft bg-surface shadow-card p-6 space-y-8">

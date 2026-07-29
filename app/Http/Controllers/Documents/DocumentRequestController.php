@@ -19,13 +19,34 @@ class DocumentRequestController extends Controller
             ->when($status, fn ($q) => $q->where('status', $status))
             ->orderByRaw("status = 'pending' desc")
             ->latest()
-            ->paginate(15)
-            ->withQueryString();
+            ->get();
 
         return view('documents.document-requests.index', [
             'documentRequests' => $documentRequests,
             'status' => $status,
             'statuses' => DocumentRequest::statuses(),
+        ]);
+    }
+
+    public function show(Request $request, DocumentRequest $documentRequest): View
+    {
+        abort_unless($request->user()->can('documents.manage'), 403);
+
+        $documentRequest->load(['employee', 'template', 'decidedBy']);
+
+        $preview = null;
+        if ($documentRequest->template) {
+            $preview = GeneratedDocument::renderContent(
+                $documentRequest->template->content,
+                $documentRequest->employee,
+                $documentRequest->field_values ?? []
+            );
+        }
+
+        return view('documents.document-requests.show', [
+            'documentRequest' => $documentRequest,
+            'statuses' => DocumentRequest::statuses(),
+            'preview' => $preview,
         ]);
     }
 
@@ -41,10 +62,11 @@ class DocumentRequestController extends Controller
         $generatedDocument = $employee->generatedDocuments()->create([
             'document_template_id' => $template->id,
             'title' => $template->name.' — '.$employee->full_name,
-            'content' => GeneratedDocument::renderContent($template->content, $employee),
+            'content' => GeneratedDocument::renderContent($template->content, $employee, $documentRequest->field_values ?? []),
             'status' => GeneratedDocument::STATUS_PENDING,
             'created_by' => $request->user()->id,
         ]);
+        $generatedDocument->initializeApprovals($request->user());
 
         $documentRequest->update([
             'status' => DocumentRequest::STATUS_FULFILLED,
@@ -53,7 +75,11 @@ class DocumentRequestController extends Controller
             'decided_at' => now(),
         ]);
 
-        return back()->with('status', 'Document généré et envoyé à l\'employé pour signature.');
+        $status = $generatedDocument->fresh()->status === GeneratedDocument::STATUS_SIGNED
+            ? 'Document généré et archivé.'
+            : 'Document généré et envoyé pour validation.';
+
+        return redirect()->route('documents.document-requests.index')->with('status', $status);
     }
 
     public function reject(Request $request, DocumentRequest $documentRequest): RedirectResponse
@@ -72,6 +98,6 @@ class DocumentRequestController extends Controller
             'decision_note' => $data['decision_note'],
         ]);
 
-        return back()->with('status', 'Demande refusée.');
+        return redirect()->route('documents.document-requests.index')->with('status', 'Demande refusée.');
     }
 }

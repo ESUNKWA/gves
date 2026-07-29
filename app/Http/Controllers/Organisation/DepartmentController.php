@@ -6,29 +6,23 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\Site;
-use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class DepartmentController extends Controller
 {
-    public function index(Request $request): View
+    public function index(): View
     {
         $departments = Department::query()
             ->with(['site', 'parent', 'manager'])
             ->withCount('employees')
-            ->when($request->string('search')->toString(), function ($query, $search) {
-                $query->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            })
             ->orderBy('name')
-            ->paginate(10)
-            ->withQueryString();
+            ->get();
 
         return view('organisation.departments.index', [
             'departments' => $departments,
-            'search' => $request->string('search')->toString(),
             'sites' => Site::orderBy('name')->get(),
             'allDepartments' => Department::orderBy('name')->get(),
             'managers' => Employee::orderBy('first_name')->get(),

@@ -2,7 +2,7 @@
     <x-page-header :title="__('Bulletins de paie')" :description="__('Générez et suivez la paie mensuelle.')">
         <x-slot:actions>
             <form method="POST" action="{{ route('payroll.payslips.run') }}" class="flex items-center gap-2"
-                onsubmit="return confirm('Lancer la paie pour tous les employés actifs ayant une structure de rémunération ?');">
+                data-confirm="Lancer la paie pour tous les employés actifs ayant une structure de rémunération ?">
                 @csrf
                 <input type="hidden" name="period" value="{{ $period->format('Y-m') }}">
                 <x-primary-button
@@ -10,12 +10,6 @@
             </form>
         </x-slot:actions>
     </x-page-header>
-
-    @if (session('status'))
-        <div class="mb-6 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
 
     <form method="GET" action="{{ route('payroll.payslips.index') }}" class="mb-6 flex flex-wrap gap-3">
         <input type="month" name="period" value="{{ $period->format('Y-m') }}" onchange="this.form.submit()"
@@ -28,19 +22,20 @@
         </x-select>
     </form>
 
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employé
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Brut
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Retenues
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Net</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employé</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Brut</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Retenues</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Net</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -48,11 +43,11 @@
                 @forelse ($payslips as $payslip)
                     <tr>
                         <td class="px-6 py-4 text-sm font-medium text-fg">{{ $payslip->employee->full_name }}</td>
-                        <td class="px-6 py-4 text-sm text-muted">
+                        <td class="px-6 py-4 text-sm text-muted" data-sort-value="{{ $payslip->gross_amount }}">
                             {{ number_format($payslip->gross_amount, 0, ',', ' ') }}</td>
-                        <td class="px-6 py-4 text-sm text-muted">
+                        <td class="px-6 py-4 text-sm text-muted" data-sort-value="{{ $payslip->deductions_amount }}">
                             {{ number_format($payslip->deductions_amount, 0, ',', ' ') }}</td>
-                        <td class="px-6 py-4 text-sm font-medium text-fg">
+                        <td class="px-6 py-4 text-sm font-medium text-fg" data-sort-value="{{ $payslip->net_amount }}">
                             {{ number_format($payslip->net_amount, 0, ',', ' ') }}</td>
                         <td class="px-6 py-4 text-sm">
                             <x-status-chip :tone="$payslip->status === 'validated' ? 'success' : 'warning'">
@@ -65,7 +60,7 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="6" class="px-6 py-8 text-center text-sm text-muted">
                             Aucun bulletin pour {{ $period->translatedFormat('F Y') }}. Cliquez sur "Lancer la paie"
                             pour en générer.
@@ -74,5 +69,5 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 </x-app-layout>

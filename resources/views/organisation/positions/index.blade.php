@@ -9,28 +9,18 @@
         </x-slot:actions>
     </x-page-header>
 
-    <form method="GET" action="{{ route('organisation.positions.index') }}" class="mb-6 max-w-xs">
-        <x-text-input type="search" name="search" value="{{ $search }}" class="w-full"
-            placeholder="Rechercher un poste..." />
-    </form>
-
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Intitulé
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Département
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Employés
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Intitulé</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Département</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Employés</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
@@ -54,7 +44,7 @@
                                     class="text-brand hover:underline">Modifier</button>
 
                                 <form method="POST" action="{{ route('organisation.positions.destroy', $position) }}"
-                                    class="inline" onsubmit="return confirm('Supprimer ce poste ?');">
+                                    class="inline" data-confirm="Supprimer ce poste ?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -63,18 +53,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="5" class="px-6 py-8 text-center text-sm text-muted">Aucun poste pour le moment.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div class="mt-4">
-        {{ $positions->links() }}
-    </div>
+    </x-data-table>
 
     <x-modal name="position-create" :show="old('_modal') === 'position-create'" focusable>
         <form method="POST" action="{{ route('organisation.positions.store') }}" class="p-6">

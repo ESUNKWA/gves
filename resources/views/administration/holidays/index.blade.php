@@ -7,27 +7,22 @@
         </x-slot:actions>
     </x-page-header>
 
-    @if (session('status'))
-        <div class="mb-4 p-3 rounded-lg bg-success-soft text-success text-sm">
-            {{ session('status') }}
-        </div>
-    @endif
-
-    <div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden">
+    <x-data-table>
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Date
-                    </th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Libellé
-                    </th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Date</th>
+                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                        Libellé</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-line">
                 @forelse ($holidays as $holiday)
                     <tr>
-                        <td class="px-6 py-4 text-sm font-medium text-fg">{{ $holiday->date->format('d/m/Y') }}
+                        <td class="px-6 py-4 text-sm font-medium text-fg"
+                            data-sort-value="{{ $holiday->date->timestamp }}">{{ $holiday->date->format('d/m/Y') }}
                         </td>
                         <td class="px-6 py-4 text-sm text-muted">{{ $holiday->name }}</td>
                         <td class="px-6 py-4 text-right text-sm space-x-3">
@@ -35,7 +30,7 @@
                                 x-on:click="$dispatch('open-modal', 'holiday-edit-{{ $holiday->id }}')"
                                 class="text-brand hover:underline">Modifier</button>
                             <form method="POST" action="{{ route('administration.holidays.destroy', $holiday) }}"
-                                class="inline" onsubmit="return confirm('Supprimer ce jour férié ?');">
+                                class="inline" data-confirm="Supprimer ce jour férié ?">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="text-danger hover:underline">Supprimer</button>
@@ -43,14 +38,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr>
+                    <tr data-empty-row>
                         <td colspan="3" class="px-6 py-8 text-center text-sm text-muted">Aucun jour férié configuré.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </x-data-table>
 
     <x-modal name="holiday-create" :show="old('_modal') === 'holiday-create'" focusable>
         <form method="POST" action="{{ route('administration.holidays.store') }}" class="p-6">
