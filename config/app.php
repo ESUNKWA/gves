@@ -157,4 +157,20 @@ return [
 
     'admin_reset_token' => env('ADMIN_RESET_TOKEN'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Platform admin token
+    |--------------------------------------------------------------------------
+    |
+    | Shared secret protecting the central /platform/tenants screen (see
+    | EnsurePlatformAdminToken) — the multi-tenant platform has no central
+    | user accounts yet (users are tenant-scoped), so tenant provisioning is
+    | gated by this token instead of a real login. A stand-in for local/dev
+    | testing, not a production access-control model. Left unset by default:
+    | the screen refuses every request (503) until this is configured.
+    |
+    */
+
+    'platform_admin_token' => env('PLATFORM_ADMIN_TOKEN'),
+
 ];

@@ -62,9 +62,18 @@ class CompanySetting extends Model
         ]);
     }
 
+    /**
+     * tenant_asset(), not Storage::disk('public')->url(): the 'public' disk
+     * root is tenant-suffixed by FilesystemTenancyBootstrapper, but the
+     * public/storage symlink only ever points at the central storage/app/public
+     * folder — tenant_asset() instead routes through stancl's own
+     * TenantAssetsController (GET /tenancy/assets/{path}), which initializes
+     * tenancy itself and serves straight from storage_path('app/public/...'),
+     * correctly resolving to the current tenant's folder.
+     */
     public function logoUrl(): ?string
     {
-        return $this->logo_path ? Storage::disk('public')->url($this->logo_path) : null;
+        return $this->logo_path ? tenant_asset($this->logo_path) : null;
     }
 
     /**

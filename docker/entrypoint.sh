@@ -27,12 +27,20 @@ php artisan storage:link --force || true
 
 # Additive only — this project never runs migrate:fresh outside an explicit,
 # separate operator decision (see CLAUDE.md).
+#
+# Central migrations only (tenants/domains/cache/jobs/sessions) — business
+# schema now lives in per-tenant databases (database/migrations/tenant),
+# migrated individually when a tenant is provisioned (see
+# App\Http\Controllers\Platform\TenantController). DatabaseSeeder's
+# unconditional `db:seed --force` doesn't run here anymore: it assumes the
+# old single-tenant schema (users/roles/etc, now tenant-scoped) and would
+# fail against the central-only connection.
 php artisan migrate --force
 
-# Every seeder DatabaseSeeder calls is idempotent (firstOrCreate-based), so
-# this is safe to run on every boot, not just the first — it's what creates
-# (or repairs the role on) the instance's super-admin from ADMIN_EMAIL /
-# ADMIN_PASSWORD, plus starter departments/positions/leave types/etc.
-php artisan db:seed --force
+# Propagates any new tenant migration to every existing tenant database on
+# every boot/redeploy, not just at provisioning time. Safe no-op with zero
+# tenants (runForMultiple() over an empty list). --force is already baked
+# into config('tenancy.migration_parameters').
+php artisan tenants:migrate
 
 exec "$@"
