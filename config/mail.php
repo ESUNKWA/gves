@@ -79,6 +79,11 @@ return [
             'transport' => 'array',
         ],
 
+        'ekwatech' => [
+            'transport' => 'ekwatech',
+            'endpoint' => env('EKWATECH_EMAIL_API'),
+        ],
+
         'failover' => [
             'transport' => 'failover',
             'mailers' => [

@@ -90,7 +90,7 @@ class PagesRenderTest extends TestCase
 
     public function test_guest_pages_render_without_error(): void
     {
-        $this->get('/')->assertRedirect(route('login', absolute: false));
+        $this->get('/')->assertOk();
 
         $routes = ['login', 'login.personnel', 'register', 'password.request', 'onboarding.create', 'onboarding.thanks'];
 

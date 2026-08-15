@@ -18,7 +18,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Throwable;
 
@@ -45,9 +47,13 @@ class TenantController extends Controller
      * — includes the "Salaire de base" component with is_base_salary
      * set, required by Payslip::generateFor() and the net-salary solver,
      * see CLAUDE.md), a starter organisation chart (3 departments, 3
-     * positions — OrganisationStarterSeeder), create a first super-admin,
-     * set the tenant's company name, then email that admin their login
-     * link and password.
+     * positions — OrganisationStarterSeeder), create a first super-admin
+     * with an unusable random password, set the tenant's company name,
+     * then email that admin a password-set link (Password::broker(), the
+     * same mechanism as EmployeeAccountController — never a plaintext
+     * password: besides being bad practice, Gmail/Outlook reliably flag
+     * "here is your email + password" emails as spam/phishing regardless
+     * of SPF/DKIM/DMARC, confirmed the hard way on gves.ekwatech.com).
      */
     public function store(Request $request): RedirectResponse
     {
@@ -60,7 +66,6 @@ class TenantController extends Controller
             'domain' => 'required|string|max:255|unique:domains,domain',
             'admin_name' => 'required|string|max:255',
             'admin_email' => 'required|email|max:255',
-            'admin_password' => ['required', 'string', Password::min(8)],
         ]);
 
         $tenant = Tenant::create([
@@ -70,7 +75,10 @@ class TenantController extends Controller
 
         $tenant->domains()->create(['domain' => $data['domain']]);
 
-        $tenant->run(function () use ($data) {
+        $scheme = $request->secure() ? 'https' : 'http';
+        $resetUrl = null;
+
+        $tenant->run(function () use ($data, $scheme, &$resetUrl) {
             Artisan::call('db:seed', [
                 '--class' => RolesAndPermissionsSeeder::class,
                 '--force' => true,
@@ -101,25 +109,33 @@ class TenantController extends Controller
             $admin = User::create([
                 'name' => $data['admin_name'],
                 'email' => $data['admin_email'],
-                'password' => Hash::make($data['admin_password']),
+                // Random & never revealed: the admin sets their own password via
+                // the emailed reset link, they never receive this one.
+                'password' => Hash::make(Str::random(40)),
                 'email_verified_at' => now(),
             ]);
 
             $admin->assignRole('super-admin');
 
             CompanySetting::current()->update(['name' => $data['name']]);
+
+            // URL::forceRootUrl: this request is on the central domain, but
+            // 'password.reset' is a tenant-only route (routes/tenant.php) —
+            // without this, url()/route() would build the link against the
+            // central domain, which PreventAccessFromCentralDomains blocks.
+            URL::forceRootUrl("{$scheme}://{$data['domain']}");
+            $token = Password::broker()->createToken($admin);
+            $resetUrl = URL::route('password.reset', ['token' => $token, 'email' => $admin->email]);
+            URL::forceRootUrl(null);
         });
 
         $status = 'Tenant créé.';
 
         try {
-            $loginUrl = ($request->secure() ? 'https' : 'http').'://'.$data['domain'].'/login';
-
             Mail::to($data['admin_email'])->send(new TenantAdminWelcomeMail(
                 $data['name'],
-                $loginUrl,
+                $resetUrl,
                 $data['admin_email'],
-                $data['admin_password'],
             ));
         } catch (Throwable $e) {
             report($e);

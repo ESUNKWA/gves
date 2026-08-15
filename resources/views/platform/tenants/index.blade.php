@@ -77,17 +77,13 @@
                     <x-input-error :messages="$errors->get('admin_name')" class="mt-2" />
                 </div>
 
-                <div>
+                <div class="sm:col-span-2">
                     <x-input-label for="admin_email" value="Email" />
                     <x-text-input type="email" name="admin_email" id="admin_email" value="{{ old('admin_email') }}"
                         class="mt-1" />
                     <x-input-error :messages="$errors->get('admin_email')" class="mt-2" />
-                </div>
-
-                <div class="sm:col-span-2">
-                    <x-input-label for="admin_password" value="Mot de passe" />
-                    <x-text-input type="password" name="admin_password" id="admin_password" class="mt-1" />
-                    <x-input-error :messages="$errors->get('admin_password')" class="mt-2" />
+                    <p class="mt-1 text-xs text-muted">Un email lui sera envoyé pour définir son mot de passe — pas
+                        besoin de le saisir ici.</p>
                 </div>
             </div>
 

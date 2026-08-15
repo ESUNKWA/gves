@@ -14,9 +14,8 @@ class TenantAdminWelcomeMail extends Mailable
 
     public function __construct(
         public string $tenantName,
-        public string $loginUrl,
+        public string $resetUrl,
         public string $adminEmail,
-        public string $adminPassword,
     ) {}
 
     public function envelope(): Envelope
@@ -30,6 +29,7 @@ class TenantAdminWelcomeMail extends Mailable
     {
         return new Content(
             view: 'emails.tenant-admin-welcome',
+            text: 'emails.tenant-admin-welcome-text',
         );
     }
 }

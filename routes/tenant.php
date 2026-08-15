@@ -63,15 +63,14 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
 ])->group(function () {
-    // Redirect rather than Route::view('/', 'welcome'): welcome.blade.php
-    // calls CompanySetting::current() (fine here, tenant-scoped and
-    // available) but sharing the bare '/' URI with routes/web.php's central
-    // '/' would silently shadow one of them — Laravel's RouteCollection
-    // keys lookups by method+domain+uri, with no host-based disambiguation
-    // for routes without an explicit ->domain(), so whichever file
-    // registers '/' last (this one, loaded after routes/web.php via
-    // TenancyServiceProvider::mapRoutes()) would win for every hostname.
-    Route::redirect('/', '/login');
+    // Safe to share the bare '/' URI with routes/web.php's central '/':
+    // RouteCollection keys routes by domain+uri (Route::domain($domain)
+    // there vs. no domain here), so the two land on different keys and
+    // don't shadow each other — verified via RouteCollection::addToCollections().
+    // welcome.blade.php's CompanySetting::current()/@auth calls are safe
+    // here (tenant-scoped, both tables exist) — unlike on the central
+    // domain, where 'users'/'company_settings' don't exist at all.
+    Route::view('/', 'welcome');
 
     Route::get('verification/bulletin/{reference}', PayslipVerificationController::class)->name('verification.payslip');
 
