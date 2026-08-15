@@ -215,32 +215,39 @@
         <input type="hidden" name="content" x-ref="contentInput" value="{{ $initialContent }}">
         <x-input-error :messages="$err('content')" class="mt-2" />
 
-        <div class="mt-2 rounded-lg bg-surface-2 p-3">
+        <div class="mt-2 rounded-lg bg-surface-2 p-3" x-data="{ varTab: '{{ array_key_first($variables) }}' }">
             <p class="text-xs font-medium text-fg mb-2">Variables disponibles (cliquer pour insérer) :</p>
-            <div class="space-y-2.5">
+
+            <div class="flex flex-wrap gap-4 border-b border-line-soft">
                 @foreach ($variables as $group => $groupVariables)
-                    <div>
-                        <p class="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
-                            {{ $group }}</p>
-                        <div class="flex flex-wrap gap-1.5">
-                            @foreach ($groupVariables as $tag => $label)
-                                <button type="button" title="{{ $label }}"
-                                    x-on:click="insert('{{ $tag }}')"
-                                    class="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-brand border border-line-soft hover:bg-brand/10">{{ $tag }}</button>
-                            @endforeach
-                        </div>
+                    <button type="button" x-on:click="varTab = '{{ $group }}'"
+                        :class="varTab === '{{ $group }}' ? 'border-brand text-brand' :
+                            'border-transparent text-muted hover:text-fg'"
+                        class="border-b-2 pb-1.5 text-xs font-medium transition">{{ $group }}</button>
+                @endforeach
+                <button type="button" x-on:click="varTab = 'Demande'"
+                    x-show="fields.filter((f) => f.key).length > 0" x-cloak
+                    :class="varTab === 'Demande' ? 'border-brand text-brand' : 'border-transparent text-muted hover:text-fg'"
+                    class="border-b-2 pb-1.5 text-xs font-medium transition">Demande</button>
+            </div>
+
+            <div class="mt-2.5">
+                @foreach ($variables as $group => $groupVariables)
+                    <div x-show="varTab === '{{ $group }}'" x-cloak class="flex flex-wrap gap-1.5">
+                        @foreach ($groupVariables as $tag => $label)
+                            <button type="button" title="{{ $label }}"
+                                x-on:click="insert('{{ $tag }}')"
+                                class="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-brand border border-line-soft hover:bg-brand/10">{{ $tag }}</button>
+                        @endforeach
                     </div>
                 @endforeach
 
-                <div x-show="fields.filter((f) => f.key).length > 0" x-cloak>
-                    <p class="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">Demande</p>
-                    <div class="flex flex-wrap gap-1.5">
-                        <template x-for="field in fields.filter((f) => f.key)" :key="field.key">
-                            <button type="button" x-on:click="insert(demandeTag(field.key))" :title="field.label"
-                                x-text="demandeTag(field.key)"
-                                class="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-brand border border-line-soft hover:bg-brand/10"></button>
-                        </template>
-                    </div>
+                <div x-show="varTab === 'Demande'" x-cloak class="flex flex-wrap gap-1.5">
+                    <template x-for="field in fields.filter((f) => f.key)" :key="field.key">
+                        <button type="button" x-on:click="insert(demandeTag(field.key))" :title="field.label"
+                            x-text="demandeTag(field.key)"
+                            class="rounded bg-surface px-1.5 py-0.5 text-xs font-mono text-brand border border-line-soft hover:bg-brand/10"></button>
+                    </template>
                 </div>
             </div>
         </div>

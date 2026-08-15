@@ -128,6 +128,55 @@ class DocumentSignatureTest extends TestCase
         $this->assertStringContainsString('40h/semaine', $rendered);
     }
 
+    public function test_generated_document_substitutes_all_employee_variables(): void
+    {
+        $manager = $this->makeEmployee(['first_name' => 'Kader', 'last_name' => 'Traoré']);
+        $employee = $this->makeEmployee([
+            'gender' => 'female',
+            'birth_date' => '1994-03-12',
+            'birth_place' => 'Bouaké',
+            'nationality' => "Côte d'Ivoire",
+            'national_id' => 'CI-99887766',
+            'marital_status' => 'Célibataire',
+            'address' => 'Rue des Jardins',
+            'city' => 'Abidjan',
+            'country' => "Côte d'Ivoire",
+            'bank_account_number' => 'CI93CI0080000123456789',
+            'social_security_number' => 'CNPS-11223',
+            'category' => 'Cadre Classe 4.3',
+            'qualification' => 'Master RH',
+            'tax_shares' => 2.5,
+            'manager_id' => $manager->id,
+            'termination_date' => '2026-12-31',
+            'status' => Employee::STATUS_TERMINATED,
+        ]);
+
+        $rendered = GeneratedDocument::renderContent(
+            'Genre : {{employe.genre}}. Né(e) le {{employe.date_naissance}} à {{employe.lieu_naissance}}. '
+                .'Nationalité : {{employe.nationalite}}. Pièce : {{employe.piece_identite}}. '
+                .'Situation : {{employe.situation_familiale}}. Adresse : {{employe.adresse}}, {{employe.ville}}, {{employe.pays}}. '
+                .'Compte : {{employe.compte_bancaire}}. Sécu : {{employe.numero_secu}}. '
+                .'Catégorie : {{employe.categorie}}. Qualification : {{employe.qualification}}. Parts : {{employe.parts_fiscales}}. '
+                .'Manager : {{employe.manager}}. Sortie le {{employe.date_sortie}}. Statut : {{employe.statut}}.',
+            $employee
+        );
+
+        $this->assertStringContainsString('Genre : Féminin', $rendered);
+        $this->assertStringContainsString('Né(e) le 12/03/1994 à Bouaké', $rendered);
+        $this->assertStringContainsString('Nationalité : Côte d&#039;Ivoire', $rendered);
+        $this->assertStringContainsString('Pièce : CI-99887766', $rendered);
+        $this->assertStringContainsString('Situation : Célibataire', $rendered);
+        $this->assertStringContainsString('Adresse : Rue des Jardins, Abidjan, Côte d&#039;Ivoire', $rendered);
+        $this->assertStringContainsString('Compte : CI93CI0080000123456789', $rendered);
+        $this->assertStringContainsString('Sécu : CNPS-11223', $rendered);
+        $this->assertStringContainsString('Catégorie : Cadre Classe 4.3', $rendered);
+        $this->assertStringContainsString('Qualification : Master RH', $rendered);
+        $this->assertStringContainsString('Parts : 2.5', $rendered);
+        $this->assertStringContainsString('Manager : Kader Traoré', $rendered);
+        $this->assertStringContainsString('Sortie le 31/12/2026', $rendered);
+        $this->assertStringContainsString('Statut : Sorti', $rendered);
+    }
+
     public function test_contract_variables_render_as_empty_strings_when_the_employee_has_no_contract(): void
     {
         $employee = $this->makeEmployee();
