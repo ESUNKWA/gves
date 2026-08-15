@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Stancl\JobPipeline\JobPipeline;
+use Stancl\Tenancy\DatabaseConfig;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
 use Stancl\Tenancy\Listeners;
@@ -104,6 +105,22 @@ class TenancyServiceProvider extends ServiceProvider
         $this->mapRoutes();
 
         $this->makeTenancyMiddlewareHighestPriority();
+        $this->useSlugForDatabaseName();
+    }
+
+    /**
+     * Tenant DB names are tenant_{slug} (e.g. tenant_acme) instead of the
+     * default tenant_{id} (a UUID) — readable in psql/pgAdmin. The tenant's
+     * actual id (UUID, primary key, domains.tenant_id FK) is untouched;
+     * only the physical database name is derived from the slug. Not
+     * retroactive: tenants created before this was added keep their
+     * tenant_{uuid} name.
+     */
+    protected function useSlugForDatabaseName()
+    {
+        DatabaseConfig::generateDatabaseNamesUsing(function ($tenant) {
+            return config('tenancy.database.prefix').$tenant->slug.config('tenancy.database.suffix');
+        });
     }
 
     protected function bootEvents()

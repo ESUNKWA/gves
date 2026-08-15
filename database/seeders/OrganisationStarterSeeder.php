@@ -20,9 +20,6 @@ class OrganisationStarterSeeder extends Seeder
             ['code' => 'DG', 'name' => 'Direction Générale'],
             ['code' => 'RH', 'name' => 'Ressources Humaines'],
             ['code' => 'FIN', 'name' => 'Finance & Comptabilité'],
-            ['code' => 'COM', 'name' => 'Commercial'],
-            ['code' => 'OPS', 'name' => 'Opérations'],
-            ['code' => 'IT', 'name' => 'Informatique'],
         ];
 
         foreach ($departments as $department) {
@@ -32,12 +29,7 @@ class OrganisationStarterSeeder extends Seeder
         $positions = [
             ['code' => 'DG-01', 'title' => 'Directeur Général', 'department' => 'DG'],
             ['code' => 'RH-01', 'title' => 'Responsable RH', 'department' => 'RH'],
-            ['code' => 'RH-02', 'title' => 'Gestionnaire de paie', 'department' => 'RH'],
             ['code' => 'FIN-01', 'title' => 'Comptable', 'department' => 'FIN'],
-            ['code' => 'COM-01', 'title' => 'Chargé(e) commercial(e)', 'department' => 'COM'],
-            ['code' => 'OPS-01', 'title' => 'Chef d\'équipe', 'department' => 'OPS'],
-            ['code' => 'IT-01', 'title' => 'Administrateur systèmes', 'department' => 'IT'],
-            ['code' => 'ADM-01', 'title' => 'Assistant(e) administratif(ve)', 'department' => null],
         ];
 
         $departmentIds = Department::whereIn('code', array_column($positions, 'department'))

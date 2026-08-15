@@ -8,7 +8,7 @@ function cssVar(name, fallback) {
 }
 
 const swalDefaults = {
-    confirmButtonColor: cssVar('--color-primary', '#4f46e5'),
+    confirmButtonColor: cssVar('--color-primary', '#f990a5'),
     cancelButtonColor: cssVar('--muted', '#78746c'),
     buttonsStyling: true,
 };

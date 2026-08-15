@@ -128,14 +128,6 @@
             text-transform: uppercase;
         }
 
-        .footer {
-            margin-top: 16px;
-            padding-top: 6px;
-            border-top: 1px solid #d1d5db;
-            font-size: 8px;
-            color: #9ca3af;
-            text-align: center;
-        }
     </style>
 </head>
 
@@ -256,10 +248,7 @@
         </table>
     @endif
 
-    <div class="footer">
-        {{ $company->name }} — {{ $company->addressLine() }}<br>
-        Document confidentiel destiné exclusivement à son destinataire.
-    </div>
+    @include('pdf.partials.footer')
 </body>
 
 </html>

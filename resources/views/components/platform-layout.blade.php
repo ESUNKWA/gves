@@ -12,7 +12,7 @@
     a fixed brand color instead of the per-client one. --}}
     <style>
         :root {
-            --color-primary: 79 70 229;
+            --color-primary: 249 144 165;
         }
     </style>
 

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'SIRH') }}</title>
+    <title>{{ config('app.name', 'GVES') }}</title>
 
     <!-- Brand color, configurable per client from Administration > Entreprise -->
     <style>
@@ -37,7 +37,7 @@
                 <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand">
                     <x-application-logo class="h-5 w-5 text-white" />
                 </span>
-                <span class="text-base font-semibold text-white">{{ config('app.name', 'SIRH') }}</span>
+                <span class="text-base font-semibold text-white">{{ config('app.name', 'GVES') }}</span>
             </a>
 
             @php $variant = $variant ?? 'rh'; @endphp
@@ -179,7 +179,7 @@
             </div>
 
             <p class="relative text-xs text-slate-500">
-                &copy; {{ date('Y') }} {{ config('app.name', 'SIRH') }}. {{ __('Tous droits réservés.') }}
+                &copy; {{ date('Y') }} {{ config('app.name', 'GVES') }}. {{ __('Tous droits réservés.') }}
             </p>
         </div>
 
@@ -191,7 +191,7 @@
                     <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-brand">
                         <x-application-logo class="h-5 w-5 text-white" />
                     </span>
-                    <span class="text-base font-semibold text-fg">{{ config('app.name', 'SIRH') }}</span>
+                    <span class="text-base font-semibold text-fg">{{ config('app.name', 'GVES') }}</span>
                 </a>
 
                 {{ $slot }}

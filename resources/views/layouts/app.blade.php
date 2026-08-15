@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'SIRH') }}</title>
+    <title>{{ config('app.name', 'GVES') }}</title>
 
     <!-- Brand color, configurable per client from Administration > Entreprise -->
     <style>
@@ -50,7 +50,7 @@
 
                 <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2">
                     <x-application-logo class="h-6 w-6 text-brand" />
-                    <span class="font-semibold text-fg">{{ config('app.name', 'SIRH') }}</span>
+                    <span class="font-semibold text-fg">{{ config('app.name', 'GVES') }}</span>
                 </a>
             </header>
 

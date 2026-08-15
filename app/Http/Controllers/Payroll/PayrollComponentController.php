@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\EmployeePayComponent;
 use App\Models\PayrollComponent;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -89,6 +90,27 @@ class PayrollComponentController extends Controller
         PayrollComponent::create($this->validated($request));
 
         return redirect()->route('payroll.components.index')->with('status', 'Rubrique créée.');
+    }
+
+    /**
+     * Persist a new drag-and-drop order from the rubriques list — called via
+     * AJAX (see resources/views/payroll/components/index.blade.php's
+     * x-sort handler), one request per drop, no page reload/redirect.
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        abort_unless($request->user()->can('payroll.manage'), 403);
+
+        $data = $request->validate([
+            'order' => 'required|array',
+            'order.*' => 'integer|exists:payroll_components,id',
+        ]);
+
+        foreach ($data['order'] as $position => $id) {
+            PayrollComponent::whereKey($id)->update(['order' => $position + 1]);
+        }
+
+        return response()->json(['status' => 'ok']);
     }
 
     public function update(Request $request, PayrollComponent $payrollComponent): RedirectResponse

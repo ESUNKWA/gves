@@ -59,7 +59,7 @@
                             <input type="color" x-model="color" aria-label="Couleur d'accent"
                                 class="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-line bg-surface p-1">
                             <input type="text" name="primary_color" id="primary_color_text" x-model="color"
-                                maxlength="7" placeholder="#4f46e5"
+                                maxlength="7" placeholder="#f990a5"
                                 class="block w-full rounded-lg border-line bg-surface text-sm font-mono text-fg shadow-sm focus:border-brand focus:ring-brand dark:focus:border-brand dark:focus:ring-brand">
                         </div>
                         <p class="mt-1 text-xs text-muted">

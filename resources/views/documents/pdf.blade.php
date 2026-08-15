@@ -100,18 +100,18 @@
                     </tr>
                 @endforeach
             </table>
-            <p class="meta">Empreinte d'intégrité du document (SHA-256) : {{ $hash }}</p>
         </div>
     @else
         <div class="signature-block">
             <p><strong>Signé électroniquement par :</strong> {{ $employee->full_name }}</p>
             <img class="signature-image" src="{{ $signatureData }}">
             <p class="meta">
-                Signé le {{ $signedAt->format('d/m/Y à H:i') }} depuis l'adresse IP {{ $signedIp }}.<br>
-                Empreinte d'intégrité du document (SHA-256) : {{ $hash }}
+                Signé le {{ $signedAt->format('d/m/Y à H:i') }} depuis l'adresse IP {{ $signedIp }}.
             </p>
         </div>
     @endif
+
+    @include('pdf.partials.footer')
 </body>
 
 </html>

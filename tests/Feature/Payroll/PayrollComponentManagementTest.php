@@ -332,4 +332,39 @@ class PayrollComponentManagementTest extends TestCase
         $response->assertOk();
         $response->assertSee('420 000', false);
     }
+
+    public function test_hr_can_reorder_payroll_components_via_drag_and_drop(): void
+    {
+        $first = PayrollComponent::create([
+            'name' => 'Salaire de base', 'code' => 'BASE',
+            'type' => PayrollComponent::TYPE_GAIN, 'calculation_method' => PayrollComponent::METHOD_FIXED, 'order' => 1,
+        ]);
+        $second = PayrollComponent::create([
+            'name' => 'Prime de transport', 'code' => 'TRANSPORT',
+            'type' => PayrollComponent::TYPE_GAIN, 'calculation_method' => PayrollComponent::METHOD_FIXED, 'order' => 2,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('payroll.components.reorder'), [
+            'order' => [$second->id, $first->id],
+        ]);
+
+        $response->assertOk();
+        $this->assertSame(1, $second->fresh()->order);
+        $this->assertSame(2, $first->fresh()->order);
+    }
+
+    public function test_a_user_without_payroll_permission_cannot_reorder_components(): void
+    {
+        $manager = User::factory()->create();
+        $manager->assignRole('manager');
+
+        $component = PayrollComponent::create([
+            'name' => 'Salaire de base', 'code' => 'BASE',
+            'type' => PayrollComponent::TYPE_GAIN, 'calculation_method' => PayrollComponent::METHOD_FIXED, 'order' => 1,
+        ]);
+
+        $this->actingAs($manager)
+            ->post(route('payroll.components.reorder'), ['order' => [$component->id]])
+            ->assertForbidden();
+    }
 }

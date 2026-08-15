@@ -63,6 +63,14 @@ class LeaveTypesSeeder extends Seeder
                 'requires_approval' => true,
                 'max_carry_over_days' => 0,
             ],
+            [
+                'name' => 'Congé exceptionnel',
+                'code' => 'CE',
+                'accrual_days_per_month' => null,
+                'is_paid' => true,
+                'requires_approval' => true,
+                'max_carry_over_days' => 0,
+            ],
         ];
 
         foreach ($types as $type) {

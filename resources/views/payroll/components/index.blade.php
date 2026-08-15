@@ -7,24 +7,56 @@
         </x-slot:actions>
     </x-page-header>
 
-    <x-data-table>
+    {{--
+        No <x-data-table>: its Alpine component re-sorts/repaginates the
+        <tr> DOM on init and on every search/page-size change, based on a
+        `rows` array snapshotted once at init — that would fight the
+        drag-and-drop reorder below (whichever touches the DOM last wins).
+        Rubriques lists are short by nature, so dropping client-side
+        search/pagination here is a deliberate trade — drag replaces the
+        column-sort this table would otherwise offer.
+    --}}
+    <div class="overflow-x-auto rounded-xl border border-line-soft bg-surface shadow-card">
         <table class="min-w-full divide-y divide-line">
             <thead class="bg-surface-2">
                 <tr>
-                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    <th class="w-8 px-3 py-3"></th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                         Nom</th>
-                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                         Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Calcul
                     </th>
-                    <th data-sort class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
+                    <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">
                         Statut</th>
                     <th class="px-6 py-3"></th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-line">
+            <tbody class="divide-y divide-line" x-data="{
+                reorder() {
+                    const order = Array.from(this.$el.querySelectorAll('tr[data-id]')).map((row) => Number(row.dataset.id));
+                    axios.post('{{ route('payroll.components.reorder') }}', { order }).catch(() => {
+                        window.Swal?.fire({
+                            toast: true,
+                            position: 'top-end',
+                            icon: 'error',
+                            text: 'L\'ordre n\'a pas pu être enregistré. Rechargez la page et réessayez.',
+                            timer: 4500,
+                            timerProgressBar: true,
+                            showConfirmButton: false,
+                        });
+                    });
+                },
+            }" x-sort="reorder()">
                 @forelse ($components as $payrollComponent)
-                    <tr>
+                    <tr x-sort:item="{{ $payrollComponent->id }}" data-id="{{ $payrollComponent->id }}">
+                        <td x-sort:handle class="px-3 py-4 cursor-grab text-muted active:cursor-grabbing">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8.25 6.75h.008v.008H8.25V6.75Zm0 5.25h.008v.008H8.25V12Zm0 5.25h.008v.008H8.25v-5.25Zm7.5-10.5h.008v.008h-.008V6.75Zm0 5.25h.008v.008h-.008V12Zm0 5.25h.008v.008h-.008v-5.25Z" />
+                            </svg>
+                        </td>
                         <td class="px-6 py-4 text-sm font-medium text-fg">{{ $payrollComponent->name }}
                             <span class="text-muted">({{ $payrollComponent->code }})</span>
                         </td>
@@ -77,14 +109,14 @@
                         </td>
                     </tr>
                 @empty
-                    <tr data-empty-row>
-                        <td colspan="5" class="px-6 py-8 text-center text-sm text-muted">Aucune rubrique pour le
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-sm text-muted">Aucune rubrique pour le
                             moment.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-    </x-data-table>
+    </div>
 
     <x-modal name="component-create" :show="old('_modal') === 'component-create'" focusable maxWidth="4xl">
         <form method="POST" action="{{ route('payroll.components.store') }}" class="p-6">

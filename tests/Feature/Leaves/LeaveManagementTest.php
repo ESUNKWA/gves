@@ -67,15 +67,15 @@ class LeaveManagementTest extends TestCase
     {
         $response = $this->actingAs($this->admin)->post(route('leaves.types.store'), [
             '_modal' => 'leave-type-create',
-            'name' => 'Congé exceptionnel',
-            'code' => 'CE',
+            'name' => 'Congé sabbatique',
+            'code' => 'SAB',
             'is_paid' => '1',
             'requires_approval' => '1',
             'is_active' => '1',
         ]);
 
         $response->assertRedirect(route('leaves.types.index'));
-        $this->assertDatabaseHas('leave_types', ['code' => 'CE', 'name' => 'Congé exceptionnel']);
+        $this->assertDatabaseHas('leave_types', ['code' => 'SAB', 'name' => 'Congé sabbatique']);
     }
 
     public function test_hr_can_create_a_leave_request_for_an_employee(): void

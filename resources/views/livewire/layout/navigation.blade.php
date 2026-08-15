@@ -321,7 +321,7 @@ new class extends Component {
                 x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-1"
                 class="absolute bottom-full left-0 z-50 mb-2 w-full overflow-hidden rounded-lg bg-surface py-1 shadow-lg ring-1 ring-black/5"
                 style="display: none;" @click="open = false">
-                <x-dropdown-link :href="route('profile')" wire:navigate>
+                <x-dropdown-link :href="route('profile')">
                     {{ __('Profil') }}
                 </x-dropdown-link>
 

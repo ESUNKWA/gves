@@ -99,19 +99,19 @@ class CompanySetting extends Model
     }
 
     /**
-     * The brand color as space-separated RGB channels (e.g. "79 70 229"), for use in
+     * The brand color as space-separated RGB channels (e.g. "249 144 165"), for use in
      * Tailwind's `rgb(var(--color-primary) / <alpha-value>)` CSS-variable color pattern.
      */
     public function primaryColorRgbChannels(): string
     {
-        $hex = ltrim($this->primary_color ?: '#4f46e5', '#');
+        $hex = ltrim($this->primary_color ?: '#f990a5', '#');
 
         if (strlen($hex) === 3) {
             $hex = implode('', array_map(fn ($c) => str_repeat($c, 2), str_split($hex)));
         }
 
         if (! preg_match('/^[0-9a-fA-F]{6}$/', $hex)) {
-            $hex = '4f46e5';
+            $hex = 'f990a5';
         }
 
         [$r, $g, $b] = sscanf($hex, '%02x%02x%02x');
