@@ -69,6 +69,8 @@ class EmployeeController extends Controller
 
         $employee = Employee::create($data);
 
+        PayrollComponent::assignDefaultsTo($employee);
+
         return redirect()->route('organisation.employees.show', $employee)->with('status', 'Employé créé.');
     }
 

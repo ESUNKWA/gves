@@ -170,6 +170,29 @@ class DocumentApprovalWorkflowTest extends TestCase
         Storage::disk('local')->assertExists($employeeDocument->file_path);
     }
 
+    public function test_only_a_super_admin_can_act_on_a_superadmin_step(): void
+    {
+        $employee = $this->makeEmployee();
+        $template = $this->makeChainedTemplate([DocumentTemplate::STEP_SUPERADMIN]);
+
+        $this->actingAs($this->admin)->post(
+            route('organisation.employees.document-requests.store', $employee),
+            ['document_template_id' => $template->id, 'title' => 'Avance']
+        );
+        $generatedDocument = GeneratedDocument::where('employee_id', $employee->id)->firstOrFail();
+        $approval = $generatedDocument->approvals()->where('step_type', DocumentTemplate::STEP_SUPERADMIN)->firstOrFail();
+
+        $rhUser = User::factory()->create();
+        $rhUser->assignRole('rh-admin');
+        $this->actingAs($rhUser)->post(route('approvals.approve', $approval), [])->assertForbidden();
+
+        $this->actingAs($this->admin)->post(route('approvals.approve', $approval), [
+            'signature_data' => self::SAMPLE_SIGNATURE,
+        ])->assertRedirect(route('approvals.index'));
+
+        $this->assertSame(GeneratedDocumentApproval::STATUS_APPROVED, $approval->fresh()->status);
+    }
+
     public function test_a_rejection_at_any_step_cancels_the_whole_document(): void
     {
         $employee = $this->makeEmployee();

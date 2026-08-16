@@ -34,6 +34,8 @@ class DocumentTemplate extends Model
 
     public const STEP_PAYROLL = 'payroll';
 
+    public const STEP_SUPERADMIN = 'superadmin';
+
     public static function stepTypes(): array
     {
         return [
@@ -42,6 +44,7 @@ class DocumentTemplate extends Model
             self::STEP_HR => 'Décision des Ressources Humaines',
             self::STEP_DIRECTION => 'Validation de la Direction',
             self::STEP_PAYROLL => 'Traitement Comptable / Paie',
+            self::STEP_SUPERADMIN => 'Validation du Super Admin',
         ];
     }
 

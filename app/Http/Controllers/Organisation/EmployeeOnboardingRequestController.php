@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CompanySetting;
 use App\Models\Employee;
 use App\Models\EmployeeOnboardingRequest;
+use App\Models\PayrollComponent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -50,6 +51,8 @@ class EmployeeOnboardingRequestController extends Controller
             'hire_date' => now(),
             'status' => Employee::STATUS_ACTIVE,
         ]);
+
+        PayrollComponent::assignDefaultsTo($employee);
 
         $onboardingRequest->forceFill([
             'status' => EmployeeOnboardingRequest::STATUS_APPROVED,

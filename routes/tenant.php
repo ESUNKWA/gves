@@ -271,6 +271,7 @@ Route::middleware([
             Route::get('rubriques', [PayrollComponentController::class, 'index'])->name('components.index');
             Route::post('rubriques', [PayrollComponentController::class, 'store'])->name('components.store');
             Route::post('rubriques/ordre', [PayrollComponentController::class, 'reorder'])->name('components.reorder');
+            Route::post('rubriques/obligatoires', [PayrollComponentController::class, 'updateDefaults'])->name('components.defaults.update');
             Route::put('rubriques/{payrollComponent}', [PayrollComponentController::class, 'update'])->name('components.update');
             Route::delete('rubriques/{payrollComponent}', [PayrollComponentController::class, 'destroy'])->name('components.destroy');
             Route::post('rubriques/{payrollComponent}/assigner', [PayrollComponentController::class, 'bulkAssign'])->name('components.bulk-assign');

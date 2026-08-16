@@ -18,7 +18,7 @@
     @endcan
 </div>
 
-<div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-hidden mb-8">
+<div class="rounded-xl border border-line-soft bg-surface shadow-card overflow-x-auto mb-8">
     <table class="min-w-full divide-y divide-line">
         <thead class="bg-surface-2">
             <tr>

@@ -66,6 +66,7 @@ class PayrollComponent extends Model
         'ceiling_amount',
         'order',
         'is_active',
+        'assign_to_all_employees',
     ];
 
     protected function casts(): array
@@ -76,6 +77,7 @@ class PayrollComponent extends Model
             'is_active' => 'boolean',
             'is_base_salary' => 'boolean',
             'is_subject_to_contributions' => 'boolean',
+            'assign_to_all_employees' => 'boolean',
         ];
     }
 
@@ -85,6 +87,43 @@ class PayrollComponent extends Model
             self::METHOD_PERCENTAGE_OF_COMPONENT,
             self::METHOD_PERCENTAGE_OF_GROSS,
         ], true);
+    }
+
+    /**
+     * Assign this component to every currently active employee who doesn't
+     * already have it — called right after assign_to_all_employees is turned
+     * on (PayrollComponentController), so the effect is immediate rather than
+     * only applying to employees hired afterward. firstOrCreate: never
+     * overwrites an amount/is_active an HR admin already set by hand for a
+     * given employee.
+     */
+    public function assignToAllCurrentEmployees(): void
+    {
+        Employee::where('status', Employee::STATUS_ACTIVE)
+            ->whereDoesntHave('payComponents', fn ($query) => $query->where('payroll_component_id', $this->id))
+            ->each(fn (Employee $employee) => EmployeePayComponent::create([
+                'employee_id' => $employee->id,
+                'payroll_component_id' => $this->id,
+                'is_active' => true,
+            ]));
+    }
+
+    /**
+     * Every component flagged assign_to_all_employees, applied to one newly
+     * created employee — called from every place an Employee gets created
+     * (EmployeeController, EmployeeOnboardingRequestController,
+     * Platform\TenantController's first admin) so onboarding never depends on
+     * HR remembering to assign the standard rubriques by hand.
+     */
+    public static function assignDefaultsTo(Employee $employee): void
+    {
+        static::where('assign_to_all_employees', true)
+            ->where('is_active', true)
+            ->get()
+            ->each(fn (self $component) => EmployeePayComponent::firstOrCreate(
+                ['employee_id' => $employee->id, 'payroll_component_id' => $component->id],
+                ['is_active' => true]
+            ));
     }
 
     public function baseComponent(): BelongsTo
@@ -106,8 +145,8 @@ class PayrollComponent extends Model
      * Compute this component's amount for one payslip run.
      *
      * @param  array<int, float>  $computedValues  Amounts already computed this run, keyed by payroll_component_id
-     *                                              (gains are always computed before deductions, so a percentage-of-
-     *                                              component reference only ever resolves against a gain's value).
+     *                                             (gains are always computed before deductions, so a percentage-of-
+     *                                             component reference only ever resolves against a gain's value).
      */
     public function computeAmount(EmployeePayComponent $assignment, array $computedValues, float $gross): float
     {

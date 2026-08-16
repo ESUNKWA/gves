@@ -70,6 +70,7 @@ class GeneratedDocumentApproval extends Model
             DocumentTemplate::STEP_HR => $user->can('documents.manage'),
             DocumentTemplate::STEP_DIRECTION => $user->can('direction.manage'),
             DocumentTemplate::STEP_PAYROLL => $user->can('payroll.manage'),
+            DocumentTemplate::STEP_SUPERADMIN => $user->hasRole('super-admin'),
             default => false,
         };
     }

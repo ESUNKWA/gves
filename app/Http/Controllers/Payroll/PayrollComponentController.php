@@ -93,6 +93,37 @@ class PayrollComponentController extends Controller
     }
 
     /**
+     * One consolidated checklist instead of opening each rubrique's edit
+     * form individually to tick "assigner à tous" one at a time — HR checks
+     * every mandatory rubrique here and saves once. Un-checking one only
+     * clears the flag; it never removes an employee's existing assignment
+     * (same reasoning as destroy() refusing to delete a used rubrique — this
+     * feeds real payslips, nothing here is silently discarded). Checking one
+     * immediately back-fills every current active employee who doesn't
+     * already have it, not just employees hired from now on.
+     */
+    public function updateDefaults(Request $request): RedirectResponse
+    {
+        abort_unless($request->user()->can('payroll.manage'), 403);
+
+        $data = $request->validate([
+            'component_ids' => 'nullable|array',
+            'component_ids.*' => 'exists:payroll_components,id',
+        ]);
+
+        $selectedIds = $data['component_ids'] ?? [];
+
+        PayrollComponent::query()->update(['assign_to_all_employees' => false]);
+
+        PayrollComponent::whereIn('id', $selectedIds)->get()->each(function (PayrollComponent $component) {
+            $component->update(['assign_to_all_employees' => true]);
+            $component->assignToAllCurrentEmployees();
+        });
+
+        return redirect()->route('payroll.components.index')->with('status', 'Rubriques obligatoires mises à jour.');
+    }
+
+    /**
      * Persist a new drag-and-drop order from the rubriques list — called via
      * AJAX (see resources/views/payroll/components/index.blade.php's
      * x-sort handler), one request per drop, no page reload/redirect.

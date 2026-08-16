@@ -8,6 +8,7 @@ use App\Models\CompanySetting;
 use App\Models\Country;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\PayrollComponent;
 use App\Models\Position;
 use App\Models\Tenant;
 use App\Models\User;
@@ -130,7 +131,7 @@ class TenantController extends Controller
             // OrganisationStarterSeeder just seeded above.
             [$firstName, $lastName] = array_pad(explode(' ', $data['admin_name'], 2), 2, '');
 
-            Employee::create([
+            $adminEmployee = Employee::create([
                 'user_id' => $admin->id,
                 'employee_number' => Employee::nextEmployeeNumber(),
                 'first_name' => $firstName,
@@ -141,6 +142,8 @@ class TenantController extends Controller
                 'hire_date' => now(),
                 'status' => Employee::STATUS_ACTIVE,
             ]);
+
+            PayrollComponent::assignDefaultsTo($adminEmployee);
 
             CompanySetting::current()->update(['name' => $data['name']]);
 

@@ -200,7 +200,7 @@
                 </button>
             </div>
 
-            <div class="mt-2 max-h-80 overflow-y-auto rounded-lg border border-line-soft">
+            <div class="mt-2 max-h-80 overflow-x-auto overflow-y-auto rounded-lg border border-line-soft">
                 <table class="min-w-full divide-y divide-line">
                     <thead class="sticky top-0 bg-surface-2">
                         <tr>

@@ -7,6 +7,31 @@
         </x-slot:actions>
     </x-page-header>
 
+    <div class="mb-6 rounded-xl border border-line-soft bg-surface p-4 shadow-card">
+        <form method="POST" action="{{ route('payroll.components.defaults.update') }}">
+            @csrf
+            <h3 class="text-sm font-semibold text-fg">{{ __('Rubriques obligatoires pour tout employé') }}</h3>
+            <p class="mt-1 text-xs text-muted">Cochez les rubriques qui doivent impérativement figurer sur la fiche
+                de paie de chaque employé, actuel et futur. Décocher une rubrique ne retire pas les assignations déjà
+                faites — RH les retire à la main si besoin.</p>
+
+            <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($components as $payrollComponent)
+                    <label class="flex items-center gap-2 text-sm text-fg">
+                        <input type="checkbox" name="component_ids[]" value="{{ $payrollComponent->id }}"
+                            @checked($payrollComponent->assign_to_all_employees)
+                            class="rounded border-line text-brand shadow-sm focus:ring-brand">
+                        {{ $payrollComponent->name }}
+                    </label>
+                @endforeach
+            </div>
+
+            <div class="mt-4 flex justify-end">
+                <x-primary-button type="submit">{{ __('Enregistrer') }}</x-primary-button>
+            </div>
+        </form>
+    </div>
+
     {{--
         No <x-data-table>: its Alpine component re-sorts/repaginates the
         <tr> DOM on init and on every search/page-size change, based on a
@@ -79,11 +104,14 @@
                                     {{ number_format($payrollComponent->ceiling_amount, 0, ',', ' ') }}</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-sm">
+                        <td class="px-6 py-4 text-sm space-x-1">
                             @if ($payrollComponent->is_active)
                                 <x-status-chip tone="success">Actif</x-status-chip>
                             @else
                                 <x-status-chip tone="neutral">Inactif</x-status-chip>
+                            @endif
+                            @if ($payrollComponent->assign_to_all_employees)
+                                <x-status-chip tone="warning" title="Assignée automatiquement à tout employé actuel et futur">Auto</x-status-chip>
                             @endif
                         </td>
                         <td class="px-6 py-4 text-right text-sm space-x-3">
