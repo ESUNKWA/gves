@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Mail\TenantAdminWelcomeMail;
 use App\Models\CompanySetting;
 use App\Models\Country;
+use App\Models\Department;
+use App\Models\Employee;
+use App\Models\Position;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\DocumentTemplatesSeeder;
@@ -48,12 +51,15 @@ class TenantController extends Controller
      * set, required by Payslip::generateFor() and the net-salary solver,
      * see CLAUDE.md), a starter organisation chart (3 departments, 3
      * positions — OrganisationStarterSeeder), create a first super-admin
-     * with an unusable random password, set the tenant's company name,
-     * then email that admin a password-set link (Password::broker(), the
-     * same mechanism as EmployeeAccountController — never a plaintext
-     * password: besides being bad practice, Gmail/Outlook reliably flag
-     * "here is your email + password" emails as spam/phishing regardless
-     * of SPF/DKIM/DMARC, confirmed the hard way on gves.ekwatech.com).
+     * with an unusable random password plus a matching Employee record
+     * (linked via user_id, in the Direction Générale department as
+     * Directeur Général — without one, EnsureUserHasEmployeeProfile locks
+     * them out of "Mon espace"), set the tenant's company name, then email
+     * that admin a password-set link (Password::broker(), the same
+     * mechanism as EmployeeAccountController — never a plaintext password:
+     * besides being bad practice, Gmail/Outlook reliably flag "here is your
+     * email + password" emails as spam/phishing regardless of SPF/DKIM/
+     * DMARC, confirmed the hard way on gves.ekwatech.com).
      */
     public function store(Request $request): RedirectResponse
     {
@@ -116,6 +122,25 @@ class TenantController extends Controller
             ]);
 
             $admin->assignRole('super-admin');
+
+            // Also give this admin an Employee record, not just a User: without
+            // one, EnsureUserHasEmployeeProfile blocks them from "Mon espace"
+            // (congés, ma-paie, profil...) entirely. Linked to the "Direction
+            // Générale" department/"Directeur Général" position that
+            // OrganisationStarterSeeder just seeded above.
+            [$firstName, $lastName] = array_pad(explode(' ', $data['admin_name'], 2), 2, '');
+
+            Employee::create([
+                'user_id' => $admin->id,
+                'employee_number' => Employee::nextEmployeeNumber(),
+                'first_name' => $firstName,
+                'last_name' => $lastName ?: $firstName,
+                'personal_email' => $data['admin_email'],
+                'department_id' => Department::where('code', 'DG')->value('id'),
+                'position_id' => Position::where('code', 'DG-01')->value('id'),
+                'hire_date' => now(),
+                'status' => Employee::STATUS_ACTIVE,
+            ]);
 
             CompanySetting::current()->update(['name' => $data['name']]);
 

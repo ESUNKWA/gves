@@ -53,33 +53,40 @@
 
     <div x-data="{ tab: '{{ $defaultTab }}' }">
         <div class="border-b border-line mb-6">
-            <nav class="-mb-px flex space-x-6">
-                <button type="button" x-on:click="tab = 'infos'" class="py-3 text-sm font-medium border-b-2"
+            <nav class="-mb-px flex space-x-6 overflow-x-auto">
+                <button type="button" x-on:click="tab = 'infos'"
+                    class="shrink-0 whitespace-nowrap py-3 text-sm font-medium border-b-2"
                     :class="tab === 'infos' ? 'border-brand text-brand' : 'border-transparent text-muted'">
                     Informations
                 </button>
-                <button type="button" x-on:click="tab = 'contracts'" class="py-3 text-sm font-medium border-b-2"
+                <button type="button" x-on:click="tab = 'contracts'"
+                    class="shrink-0 whitespace-nowrap py-3 text-sm font-medium border-b-2"
                     :class="tab === 'contracts' ? 'border-brand text-brand' : 'border-transparent text-muted'">
                     Contrats
                 </button>
-                <button type="button" x-on:click="tab = 'documents'" class="py-3 text-sm font-medium border-b-2"
+                <button type="button" x-on:click="tab = 'documents'"
+                    class="shrink-0 whitespace-nowrap py-3 text-sm font-medium border-b-2"
                     :class="tab === 'documents' ? 'border-brand text-brand' : 'border-transparent text-muted'">
                     Documents
                 </button>
-                <button type="button" x-on:click="tab = 'leaves'" class="py-3 text-sm font-medium border-b-2"
+                <button type="button" x-on:click="tab = 'leaves'"
+                    class="shrink-0 whitespace-nowrap py-3 text-sm font-medium border-b-2"
                     :class="tab === 'leaves' ? 'border-brand text-brand' : 'border-transparent text-muted'">
                     Congés
                 </button>
-                <button type="button" x-on:click="tab = 'signatures'" class="py-3 text-sm font-medium border-b-2"
+                <button type="button" x-on:click="tab = 'signatures'"
+                    class="shrink-0 whitespace-nowrap py-3 text-sm font-medium border-b-2"
                     :class="tab === 'signatures' ? 'border-brand text-brand' : 'border-transparent text-muted'">
                     Signatures
                 </button>
-                <button type="button" x-on:click="tab = 'attendance'" class="py-3 text-sm font-medium border-b-2"
+                <button type="button" x-on:click="tab = 'attendance'"
+                    class="shrink-0 whitespace-nowrap py-3 text-sm font-medium border-b-2"
                     :class="tab === 'attendance' ? 'border-brand text-brand' : 'border-transparent text-muted'">
                     Présences
                 </button>
                 @can('payroll.manage')
-                    <button type="button" x-on:click="tab = 'payroll'" class="py-3 text-sm font-medium border-b-2"
+                    <button type="button" x-on:click="tab = 'payroll'"
+                        class="shrink-0 whitespace-nowrap py-3 text-sm font-medium border-b-2"
                         :class="tab === 'payroll' ? 'border-brand text-brand' : 'border-transparent text-muted'">
                         Paie
                     </button>

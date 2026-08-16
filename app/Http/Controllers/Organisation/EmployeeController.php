@@ -95,7 +95,8 @@ class EmployeeController extends Controller
             'generatedDocuments' => $employee->generatedDocuments()->latest()->get(),
             'documentTemplates' => DocumentTemplate::where('is_active', true)->orderBy('name')->get(),
             'signatureStatuses' => GeneratedDocument::statuses(),
-            'workSchedule' => $employee->workSchedule ?? new WorkSchedule,
+            'workSchedule' => $employee->effectiveWorkSchedule(),
+            'hasOwnWorkSchedule' => (bool) $employee->workSchedule,
             'timeEntries' => $employee->timeEntries()->latest('date')->limit(30)->get(),
             'dayLabels' => WorkSchedule::dayLabels(),
             'employeePayComponents' => $employee->payComponents()->with('payrollComponent')->get()

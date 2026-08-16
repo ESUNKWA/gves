@@ -1,6 +1,44 @@
 <x-app-layout>
     <x-page-header :title="__('Suivi des présences')" :description="$isHr ? __('Présences de toute l\'organisation.') : __('Présences de votre équipe.')" />
 
+    @if ($isHr)
+        <div class="mb-6 rounded-xl border border-line-soft bg-surface p-4 shadow-card">
+            <div class="flex items-center justify-between gap-3">
+                <div>
+                    <p class="text-sm font-medium text-fg">{{ __('Horaire par défaut') }}</p>
+                    <p class="text-xs text-muted">Appliqué à tout employé sans horaire personnalisé — modifiable
+                        individuellement depuis sa fiche.</p>
+                </div>
+                <x-secondary-button type="button" x-data
+                    x-on:click="$dispatch('open-modal', 'default-work-schedule')">{{ __("Modifier l'horaire") }}</x-secondary-button>
+            </div>
+        </div>
+
+        <x-modal name="default-work-schedule" :show="old('_modal') === 'default-work-schedule'" focusable maxWidth="4xl">
+            <form method="POST" action="{{ route('attendance.work-schedule.update') }}" class="p-6">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="_modal" value="default-work-schedule">
+
+                <h2 class="text-lg font-medium text-fg">{{ __('Horaire par défaut') }}</h2>
+                <p class="mt-1 text-sm text-muted">Laissez les deux champs vides pour un jour non travaillé.</p>
+
+                <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @include('attendance.partials.schedule-fields', [
+                        'schedule' => $defaultSchedule,
+                        'showErrors' => old('_modal') === 'default-work-schedule',
+                    ])
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <x-secondary-button type="button"
+                        x-on:click="$dispatch('close')">{{ __('Annuler') }}</x-secondary-button>
+                    <x-primary-button class="ms-3">{{ __('Enregistrer') }}</x-primary-button>
+                </div>
+            </form>
+        </x-modal>
+    @endif
+
     <form method="GET" action="{{ route('attendance.requests.index') }}" class="mb-6 max-w-xs">
         <x-text-input type="date" name="date" value="{{ $date }}" class="w-full"
             onchange="this.form.submit()" />
@@ -24,7 +62,7 @@
                 @forelse ($employees as $employee)
                     @php
                         $entry = $employee->timeEntries->first();
-                        $late = $entry?->lateMinutes($employee->workSchedule) ?? 0;
+                        $late = $entry?->lateMinutes($employee->effectiveWorkSchedule()) ?? 0;
                     @endphp
                     <tr>
                         <td class="px-6 py-4 text-sm font-medium text-fg">

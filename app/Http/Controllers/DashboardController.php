@@ -36,7 +36,7 @@ class DashboardController extends Controller
 
     private function employeeOverview(Employee $employee): array
     {
-        $schedule = $employee->workSchedule;
+        $schedule = $employee->effectiveWorkSchedule();
 
         $leaveBalances = LeaveType::where('is_active', true)
             ->orderBy('name')

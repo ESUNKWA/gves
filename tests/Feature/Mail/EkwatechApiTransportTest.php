@@ -45,7 +45,7 @@ class EkwatechApiTransportTest extends TestCase
             return $request->url() === 'https://sendmail.ekwatech.test/api/send-mail'
                 && $request->isMultipart()
                 && $recipients->contains('admin@example.test')
-                && $subject === 'Votre espace ' . config('app.name') . '-Acme est prêt'
+                && $subject === 'Votre espace Acme est prêt'
                 && str_contains($body, 'https://acme.test/reset-password/token')
                 && ! str_contains($body, '<html'); // plain text, not the HTML part
         });

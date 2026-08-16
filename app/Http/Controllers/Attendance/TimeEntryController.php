@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Attendance;
 
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
+use App\Models\WorkSchedule;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -34,6 +35,8 @@ class TimeEntryController extends Controller
             'employees' => $employees,
             'date' => $date,
             'isHr' => $isHr,
+            'defaultSchedule' => $isHr ? WorkSchedule::default() : null,
+            'dayLabels' => WorkSchedule::dayLabels(),
         ]);
     }
 }

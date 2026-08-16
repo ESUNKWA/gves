@@ -25,23 +25,74 @@
 
             <div class="flex gap-3">
                 @if (!$todayEntry?->clock_in)
-                    <form method="POST" action="{{ route('portal.time-clock.clock-in') }}">
+                    <form method="POST" action="{{ route('portal.time-clock.clock-in') }}" x-data="clockForm()"
+                        x-on:submit.prevent="submitForm()">
                         @csrf
-                        <x-primary-button type="submit">{{ __("Pointer l'arrivée") }}</x-primary-button>
+                        <input type="hidden" name="latitude" x-ref="latitude">
+                        <input type="hidden" name="longitude" x-ref="longitude">
+                        <x-primary-button type="submit" x-bind:disabled="submitting">
+                            <span x-show="!submitting">{{ __("Pointer l'arrivée") }}</span>
+                            <span x-show="submitting" x-cloak>{{ __('Un instant…') }}</span>
+                        </x-primary-button>
                     </form>
                 @elseif (!$todayEntry->clock_out)
-                    <form method="POST" action="{{ route('portal.time-clock.clock-out') }}">
+                    <form method="POST" action="{{ route('portal.time-clock.clock-out') }}" x-data="clockForm()"
+                        x-on:submit.prevent="submitForm()">
                         @csrf
-                        <x-primary-button type="submit">{{ __('Pointer le départ') }}</x-primary-button>
+                        <input type="hidden" name="latitude" x-ref="latitude">
+                        <input type="hidden" name="longitude" x-ref="longitude">
+                        <x-primary-button type="submit" x-bind:disabled="submitting">
+                            <span x-show="!submitting">{{ __('Pointer le départ') }}</span>
+                            <span x-show="submitting" x-cloak>{{ __('Un instant…') }}</span>
+                        </x-primary-button>
                     </form>
                 @else
                     <x-status-chip tone="success">Journée terminée</x-status-chip>
                 @endif
             </div>
+
+            @once
+                <script>
+                    // Best-effort geolocation before submitting a clock-in/out —
+                    // never blocks the submit: denied permission, unsupported
+                    // browser, or a slow GPS fix all just fall through and submit
+                    // without coordinates (the IP is captured server-side either way).
+                    function clockForm() {
+                        return {
+                            submitting: false,
+                            submitForm() {
+                                this.submitting = true;
+                                const finish = () => this.$el.submit();
+
+                                if (!navigator.geolocation) {
+                                    finish();
+                                    return;
+                                }
+
+                                const timeout = setTimeout(finish, 4000);
+
+                                navigator.geolocation.getCurrentPosition(
+                                    (position) => {
+                                        clearTimeout(timeout);
+                                        this.$refs.latitude.value = position.coords.latitude;
+                                        this.$refs.longitude.value = position.coords.longitude;
+                                        finish();
+                                    },
+                                    () => {
+                                        clearTimeout(timeout);
+                                        finish();
+                                    },
+                                    { timeout: 4000, maximumAge: 60000 },
+                                );
+                            },
+                        };
+                    }
+                </script>
+            @endonce
         </div>
     </div>
 
-    @unless ($schedule)
+    @unless ($schedule->hasAnyDayDefined())
         <div class="mb-6 p-3 rounded-lg bg-warning-soft text-warning text-sm">
             Aucun horaire de travail ne vous a été assigné — les retards et heures supplémentaires ne peuvent pas être
             calculés pour l'instant.

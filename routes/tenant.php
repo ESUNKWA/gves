@@ -7,6 +7,7 @@ use App\Http\Controllers\Administration\CountryController;
 use App\Http\Controllers\Administration\HolidayController;
 use App\Http\Controllers\Administration\UserController;
 use App\Http\Controllers\ApprovalController;
+use App\Http\Controllers\Attendance\DefaultWorkScheduleController;
 use App\Http\Controllers\Attendance\TimeEntryController as AttendanceTimeEntryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Documents\DocumentRequestController;
@@ -191,6 +192,8 @@ Route::middleware([
             // team's attendance — scoping happens inside the controller, same pattern
             // as the Congés "demandes" route above.
             Route::get('suivi', [AttendanceTimeEntryController::class, 'index'])->name('requests.index');
+
+            Route::put('horaire-defaut', [DefaultWorkScheduleController::class, 'update'])->name('work-schedule.update');
         });
 
     Route::middleware(['auth', 'verified', 'has-employee-profile'])

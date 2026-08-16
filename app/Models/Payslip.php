@@ -339,7 +339,7 @@ class Payslip extends Model
     {
         $start = $this->period->copy()->startOfMonth();
         $end = $this->period->copy()->endOfMonth();
-        $schedule = $this->employee->workSchedule;
+        $schedule = $this->employee->effectiveWorkSchedule();
 
         $entries = $this->employee->timeEntries()
             ->whereDate('date', '>=', $start->toDateString())

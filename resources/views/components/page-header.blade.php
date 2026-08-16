@@ -9,7 +9,7 @@
     </div>
 
     @isset($actions)
-        <div class="flex shrink-0 items-center gap-3">
+        <div class="flex flex-wrap shrink-0 items-center gap-3">
             {{ $actions }}
         </div>
     @endisset

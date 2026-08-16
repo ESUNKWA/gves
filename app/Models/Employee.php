@@ -250,6 +250,17 @@ class Employee extends Model
         return $this->hasOne(WorkSchedule::class);
     }
 
+    /**
+     * This employee's own schedule if one was set, otherwise the company-wide
+     * default (WorkSchedule::default()) — what late/overtime calculations
+     * and payslip contractual-hours should always use, rather than the raw
+     * workSchedule() relation which is null for anyone without an override.
+     */
+    public function effectiveWorkSchedule(): WorkSchedule
+    {
+        return $this->workSchedule ?? WorkSchedule::default();
+    }
+
     public function timeEntries(): HasMany
     {
         return $this->hasMany(TimeEntry::class);

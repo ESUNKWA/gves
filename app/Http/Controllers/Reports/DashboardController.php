@@ -8,9 +8,10 @@ use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\Payslip;
 use App\Models\TimeEntry;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DashboardController extends Controller
 {
@@ -43,7 +44,7 @@ class DashboardController extends Controller
     private function chartPayload(int $year, array $workforce, array $attendance, array $leaves, array $payroll, array $movements): array
     {
         $monthLabels = collect(range(1, 12))
-            ->map(fn (int $month) => \Carbon\Carbon::create($year, $month, 1)->translatedFormat('M'))
+            ->map(fn (int $month) => Carbon::create($year, $month, 1)->translatedFormat('M'))
             ->values()
             ->all();
 
@@ -110,7 +111,7 @@ class DashboardController extends Controller
         return $this->csvResponse("masse-salariale-{$year}.csv", ['Mois', 'Brut', 'Net', 'Charges patronales'], function ($handle) use ($months, $year) {
             foreach ($months as $month) {
                 fputcsv($handle, [
-                    \Carbon\Carbon::create($year, $month['month'], 1)->translatedFormat('F Y'),
+                    Carbon::create($year, $month['month'], 1)->translatedFormat('F Y'),
                     $month['gross'],
                     $month['net'],
                     $month['employer_charges'],
@@ -217,8 +218,8 @@ class DashboardController extends Controller
                 ->with('employee.workSchedule')
                 ->get();
 
-            $lateCount = $entries->filter(fn (TimeEntry $e) => $e->lateMinutes($e->employee->workSchedule) > 0)->count();
-            $overtimeHours = round($entries->sum(fn (TimeEntry $e) => $e->overtimeMinutes($e->employee->workSchedule)) / 60, 1);
+            $lateCount = $entries->filter(fn (TimeEntry $e) => $e->lateMinutes($e->employee->effectiveWorkSchedule()) > 0)->count();
+            $overtimeHours = round($entries->sum(fn (TimeEntry $e) => $e->overtimeMinutes($e->employee->effectiveWorkSchedule())) / 60, 1);
 
             return [
                 'month' => $month,

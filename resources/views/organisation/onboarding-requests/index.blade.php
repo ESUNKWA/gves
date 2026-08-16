@@ -22,8 +22,36 @@
                 <p class="mt-0.5 truncate text-sm text-muted" id="onboarding-link">{{ url('/rejoindre') }}</p>
             </div>
             <div class="flex shrink-0 items-center gap-2">
-                <button type="button" x-data="{ copied: false }"
-                    x-on:click="navigator.clipboard.writeText(document.getElementById('onboarding-link').innerText); copied = true; setTimeout(() => copied = false, 1500)"
+                <button type="button" x-data="{
+                    copied: false,
+                    copyLink() {
+                        const text = document.getElementById('onboarding-link').innerText;
+
+                        // navigator.clipboard only exists in a secure context (HTTPS,
+                        // or localhost) — on a plain-HTTP domain like *.sirh.test it's
+                        // undefined, so writeText() throws before 'copied' is ever set.
+                        // Fall back to the legacy select+execCommand approach there.
+                        const fallbackCopy = () => {
+                            const textarea = document.createElement('textarea');
+                            textarea.value = text;
+                            textarea.style.position = 'fixed';
+                            textarea.style.opacity = '0';
+                            document.body.appendChild(textarea);
+                            textarea.select();
+                            document.execCommand('copy');
+                            document.body.removeChild(textarea);
+                        };
+
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text).catch(fallbackCopy);
+                        } else {
+                            fallbackCopy();
+                        }
+
+                        this.copied = true;
+                        setTimeout(() => this.copied = false, 1500);
+                    },
+                }" x-on:click="copyLink()"
                     class="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-sm font-medium text-fg shadow-sm hover:bg-surface-2">
                     <span x-show="!copied">{{ __('Copier le lien') }}</span>
                     <span x-show="copied" x-cloak>{{ __('Copié !') }}</span>

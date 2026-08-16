@@ -3,7 +3,8 @@
 use App\Livewire\Actions\Logout;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new class extends Component
+{
     /**
      * Log the current user out of the application.
      */
@@ -18,7 +19,7 @@ new class extends Component {
     {
         return collect(explode(' ', auth()->user()->name))
             ->filter()
-            ->map(fn($part) => mb_strtoupper(mb_substr($part, 0, 1)))
+            ->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))
             ->take(2)
             ->implode('');
     }
@@ -34,12 +35,18 @@ new class extends Component {
 <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     class="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-gradient-to-b from-ink to-ink-2 transition-transform duration-300 ease-in-out lg:static lg:z-auto lg:translate-x-0">
     <div class="flex h-16 shrink-0 items-center justify-between px-5">
+        @php($company = \App\Models\CompanySetting::current())
         <a href="{{ route('dashboard') }}" wire:navigate class="flex items-center gap-2.5 min-w-0">
-            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand">
-                <x-application-logo class="h-5 w-5 text-white" />
-            </span>
+            @if ($company->logoUrl())
+                <img src="{{ $company->logoUrl() }}" alt="{{ $company->name }}"
+                    class="h-9 w-9 shrink-0 rounded-lg object-contain bg-white">
+            @else
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand">
+                    <x-application-logo class="h-5 w-5 text-white" />
+                </span>
+            @endif
             <span
-                class="truncate text-base font-semibold tracking-tight text-white">{{ config('app.name', 'SIRH') }}</span>
+                class="truncate text-base font-semibold tracking-tight text-white">{{ $company->name ?: config('app.name', 'GVES') }}</span>
         </a>
 
         <button type="button" @click="sidebarOpen = false"

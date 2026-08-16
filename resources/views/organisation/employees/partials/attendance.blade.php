@@ -5,7 +5,13 @@
 @endphp
 
 <div class="flex items-center justify-between mb-4">
-    <h3 class="text-base font-semibold text-fg">Horaire de travail</h3>
+    <div>
+        <h3 class="text-base font-semibold text-fg">Horaire de travail</h3>
+        @unless ($hasOwnWorkSchedule)
+            <p class="text-xs text-muted">Horaire par défaut de l'entreprise — pas de personnalisation pour cet
+                employé.</p>
+        @endunless
+    </div>
     @can('employees.manage')
         <x-secondary-button type="button" x-data
             x-on:click="$dispatch('open-modal', 'time-entry-schedule')">{{ __("Modifier l'horaire") }}</x-secondary-button>
@@ -72,12 +78,24 @@
         </thead>
         <tbody class="divide-y divide-line">
             @forelse ($timeEntries as $entry)
-                @php $late = $entry->lateMinutes($employee->workSchedule); @endphp
+                @php $late = $entry->lateMinutes($employee->effectiveWorkSchedule()); @endphp
                 <tr>
                     <td class="px-4 py-3 text-sm font-medium text-fg" data-sort-value="{{ $entry->date->timestamp }}">
                         {{ $entry->date->format('d/m/Y') }}</td>
-                    <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_in?->format('H:i') ?? '—' }}</td>
-                    <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_out?->format('H:i') ?? '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-muted">
+                        {{ $entry->clock_in?->format('H:i') ?? '—' }}
+                        @if ($entry->clock_in)
+                            <x-location-badge :ip="$entry->clock_in_ip" :latitude="$entry->clock_in_latitude"
+                                :longitude="$entry->clock_in_longitude" />
+                        @endif
+                    </td>
+                    <td class="px-4 py-3 text-sm text-muted">
+                        {{ $entry->clock_out?->format('H:i') ?? '—' }}
+                        @if ($entry->clock_out)
+                            <x-location-badge :ip="$entry->clock_out_ip" :latitude="$entry->clock_out_latitude"
+                                :longitude="$entry->clock_out_longitude" />
+                        @endif
+                    </td>
                     <td class="px-4 py-3 text-sm text-muted">
                         {{ $entry->workedMinutes() !== null ? $formatMinutes($entry->workedMinutes()) : '—' }}</td>
                     <td class="px-4 py-3 text-sm">
@@ -121,23 +139,10 @@
             <p class="mt-1 text-sm text-muted">Laissez les deux champs vides pour un jour non travaillé.</p>
 
             <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                @foreach ($dayLabels as $day => $label)
-                    <div class="grid grid-cols-3 items-end gap-2">
-                        <x-input-label :value="$label" class="col-span-3 sm:col-span-1" />
-                        <div>
-                            <x-text-input name="{{ $day }}_start" type="time"
-                                value="{{ old("{$day}_start", $workSchedule->{"{$day}_start"} ? \Illuminate\Support\Carbon::parse($workSchedule->{"{$day}_start"})->format('H:i') : '') }}"
-                                class="w-full" />
-                            <x-input-error :messages="$isEditingSchedule ? $errors->get("{$day}_start") : []" class="mt-1" />
-                        </div>
-                        <div>
-                            <x-text-input name="{{ $day }}_end" type="time"
-                                value="{{ old("{$day}_end", $workSchedule->{"{$day}_end"} ? \Illuminate\Support\Carbon::parse($workSchedule->{"{$day}_end"})->format('H:i') : '') }}"
-                                class="w-full" />
-                            <x-input-error :messages="$isEditingSchedule ? $errors->get("{$day}_end") : []" class="mt-1" />
-                        </div>
-                    </div>
-                @endforeach
+                @include('attendance.partials.schedule-fields', [
+                    'schedule' => $workSchedule,
+                    'showErrors' => $isEditingSchedule,
+                ])
             </div>
 
             <div class="mt-6 flex justify-end">
