@@ -4,7 +4,8 @@ use App\Livewire\Actions\Logout;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Volt\Component;
 
-new class extends Component {
+new class extends Component
+{
     public string $password = '';
 
     /**
@@ -50,8 +51,10 @@ new class extends Component {
             <div class="mt-6">
                 <x-input-label for="password" value="{{ __('Mot de passe') }}" class="sr-only" />
 
-                <x-text-input wire:model="password" id="password" name="password" type="password" class="block w-3/4"
-                    placeholder="{{ __('Mot de passe') }}" />
+                <div class="w-3/4">
+                    <x-password-input wire:model="password" id="password" name="password" class="block w-full"
+                        placeholder="{{ __('Mot de passe') }}" />
+                </div>
 
                 <x-input-error :messages="$errors->get('password')" class="mt-2" />
             </div>

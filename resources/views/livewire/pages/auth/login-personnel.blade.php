@@ -5,7 +5,8 @@ use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest', ['variant' => 'personnel'])] class extends Component {
+new #[Layout('layouts.guest', ['variant' => 'personnel'])] class extends Component
+{
     public LoginForm $form;
 
     /**
@@ -39,7 +40,7 @@ new #[Layout('layouts.guest', ['variant' => 'personnel'])] class extends Compone
 
         <div>
             <x-input-label for="password" :value="__('Mot de passe')" />
-            <x-text-input wire:model="form.password" id="password" class="mt-1" type="password" name="password"
+            <x-password-input wire:model="form.password" id="password" class="mt-1" name="password"
                 required autocomplete="current-password" />
             <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
         </div>

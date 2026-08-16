@@ -5,7 +5,8 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Layout('layouts.guest')] class extends Component
+{
     public string $password = '';
 
     /**
@@ -18,7 +19,7 @@ new #[Layout('layouts.guest')] class extends Component {
         ]);
 
         if (
-            !Auth::guard('web')->validate([
+            ! Auth::guard('web')->validate([
                 'email' => Auth::user()->email,
                 'password' => $this->password,
             ])
@@ -43,7 +44,7 @@ new #[Layout('layouts.guest')] class extends Component {
     <form wire:submit="confirmPassword" class="mt-8 space-y-5">
         <div>
             <x-input-label for="password" :value="__('Mot de passe')" />
-            <x-text-input wire:model="password" id="password" class="mt-1" type="password" name="password" required
+            <x-password-input wire:model="password" id="password" class="mt-1" name="password" required
                 autocomplete="current-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>

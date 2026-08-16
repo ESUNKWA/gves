@@ -10,11 +10,15 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Locked;
 use Livewire\Volt\Component;
 
-new #[Layout('layouts.guest')] class extends Component {
+new #[Layout('layouts.guest')] class extends Component
+{
     #[Locked]
     public string $token = '';
+
     public string $email = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     /**
@@ -81,14 +85,14 @@ new #[Layout('layouts.guest')] class extends Component {
 
         <div>
             <x-input-label for="password" :value="__('Nouveau mot de passe')" />
-            <x-text-input wire:model="password" id="password" class="mt-1" type="password" name="password" required
+            <x-password-input wire:model="password" id="password" class="mt-1" name="password" required
                 autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
         <div>
             <x-input-label for="password_confirmation" :value="__('Confirmer le mot de passe')" />
-            <x-text-input wire:model="password_confirmation" id="password_confirmation" class="mt-1" type="password"
+            <x-password-input wire:model="password_confirmation" id="password_confirmation" class="mt-1"
                 name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
         </div>
