@@ -82,10 +82,10 @@ class TenantController extends Controller
 
         $tenant->domains()->create(['domain' => $data['domain']]);
 
-        $scheme = $request->secure() ? 'https' : 'http';
+        $origin = $this->tenantOrigin($request, $data['domain']);
         $resetUrl = null;
 
-        $tenant->run(function () use ($data, $scheme, &$resetUrl) {
+        $tenant->run(function () use ($data, $origin, &$resetUrl) {
             Artisan::call('db:seed', [
                 '--class' => RolesAndPermissionsSeeder::class,
                 '--force' => true,
@@ -147,7 +147,7 @@ class TenantController extends Controller
 
             CompanySetting::current()->update(['name' => $data['name']]);
 
-            $resetUrl = $this->buildResetUrl($admin, $data['domain'], $scheme);
+            $resetUrl = $this->buildResetUrl($admin, $origin);
         });
 
         $status = 'Tenant créé.';
@@ -173,7 +173,7 @@ class TenantController extends Controller
      * default). Generates a fresh token every time; doesn't invalidate any
      * still-outstanding one from a previous send.
      */
-    public function resendWelcomeEmail(Tenant $tenant): RedirectResponse
+    public function resendWelcomeEmail(Request $request, Tenant $tenant): RedirectResponse
     {
         $domain = $tenant->domains->first()?->domain;
 
@@ -182,10 +182,10 @@ class TenantController extends Controller
                 ->with('error', 'Ce tenant n\'a aucun domaine configuré.');
         }
 
-        $scheme = request()->secure() ? 'https' : 'http';
+        $origin = $this->tenantOrigin($request, $domain);
         $flash = null;
 
-        $tenant->run(function () use ($tenant, $domain, $scheme, &$flash) {
+        $tenant->run(function () use ($tenant, $origin, &$flash) {
             $admin = User::role('super-admin')->oldest()->first();
 
             if (! $admin) {
@@ -194,7 +194,7 @@ class TenantController extends Controller
                 return;
             }
 
-            $resetUrl = $this->buildResetUrl($admin, $domain, $scheme);
+            $resetUrl = $this->buildResetUrl($admin, $origin);
 
             try {
                 Mail::to($admin->email)->send(new TenantAdminWelcomeMail($tenant->name, $resetUrl, $admin->email));
@@ -216,13 +216,29 @@ class TenantController extends Controller
      * — without this, url()/route() would build the link against the central
      * domain, which PreventAccessFromCentralDomains blocks.
      */
-    private function buildResetUrl(User $admin, string $domain, string $scheme): string
+    private function buildResetUrl(User $admin, string $origin): string
     {
-        URL::forceRootUrl("{$scheme}://{$domain}");
+        URL::forceRootUrl($origin);
         $token = Password::broker()->createToken($admin);
         $resetUrl = URL::route('password.reset', ['token' => $token, 'email' => $admin->email]);
         URL::forceRootUrl(null);
 
         return $resetUrl;
+    }
+
+    /**
+     * scheme://domain, plus the port the operator is currently using to
+     * reach the central platform screen when it isn't the scheme's default
+     * (80/443) — e.g. local dev on :8000. Without this, a reset link built
+     * from the tenant's domain alone silently drops the port and 404s (or
+     * hits whatever else is listening on 80/443, if anything).
+     */
+    private function tenantOrigin(Request $request, string $domain): string
+    {
+        $scheme = $request->secure() ? 'https' : 'http';
+        $port = $request->getPort();
+        $isDefaultPort = ($scheme === 'https' && (int) $port === 443) || ($scheme === 'http' && (int) $port === 80);
+
+        return $isDefaultPort ? "{$scheme}://{$domain}" : "{$scheme}://{$domain}:{$port}";
     }
 }
