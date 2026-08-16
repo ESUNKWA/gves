@@ -82,20 +82,8 @@
                 <tr>
                     <td class="px-4 py-3 text-sm font-medium text-fg" data-sort-value="{{ $entry->date->timestamp }}">
                         {{ $entry->date->format('d/m/Y') }}</td>
-                    <td class="px-4 py-3 text-sm text-muted">
-                        {{ $entry->clock_in?->format('H:i') ?? '—' }}
-                        @if ($entry->clock_in)
-                            <x-location-badge :ip="$entry->clock_in_ip" :latitude="$entry->clock_in_latitude"
-                                :longitude="$entry->clock_in_longitude" />
-                        @endif
-                    </td>
-                    <td class="px-4 py-3 text-sm text-muted">
-                        {{ $entry->clock_out?->format('H:i') ?? '—' }}
-                        @if ($entry->clock_out)
-                            <x-location-badge :ip="$entry->clock_out_ip" :latitude="$entry->clock_out_latitude"
-                                :longitude="$entry->clock_out_longitude" />
-                        @endif
-                    </td>
+                    <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_in?->format('H:i') ?? '—' }}</td>
+                    <td class="px-4 py-3 text-sm text-muted">{{ $entry->clock_out?->format('H:i') ?? '—' }}</td>
                     <td class="px-4 py-3 text-sm text-muted">
                         {{ $entry->workedMinutes() !== null ? $formatMinutes($entry->workedMinutes()) : '—' }}</td>
                     <td class="px-4 py-3 text-sm">

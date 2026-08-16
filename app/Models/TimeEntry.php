@@ -16,13 +16,7 @@ class TimeEntry extends Model
         'employee_id',
         'date',
         'clock_in',
-        'clock_in_ip',
-        'clock_in_latitude',
-        'clock_in_longitude',
         'clock_out',
-        'clock_out_ip',
-        'clock_out_latitude',
-        'clock_out_longitude',
         'source',
         'corrected_by',
         'note',
@@ -33,11 +27,7 @@ class TimeEntry extends Model
         return [
             'date' => 'date',
             'clock_in' => 'datetime',
-            'clock_in_latitude' => 'decimal:7',
-            'clock_in_longitude' => 'decimal:7',
             'clock_out' => 'datetime',
-            'clock_out_latitude' => 'decimal:7',
-            'clock_out_longitude' => 'decimal:7',
         ];
     }
 

@@ -55,31 +55,6 @@ class TimeAndAttendanceTest extends TestCase
         $this->assertNotNull($entry->clock_in);
     }
 
-    public function test_clocking_in_records_the_request_ip_as_an_audit_trail(): void
-    {
-        $employee = $this->makeEmployeeWithUser();
-
-        $this->actingAs($employee->user)->post(route('portal.time-clock.clock-in'));
-
-        $entry = $employee->timeEntries()->first();
-        $this->assertNotNull($entry->clock_in_ip);
-    }
-
-    public function test_clocking_in_with_coordinates_records_them_but_never_blocks_without(): void
-    {
-        $employee = $this->makeEmployeeWithUser();
-
-        $response = $this->actingAs($employee->user)->post(route('portal.time-clock.clock-in'), [
-            'latitude' => '5.359951',
-            'longitude' => '-4.008256',
-        ]);
-
-        $response->assertRedirect(route('portal.time-clock.index'));
-        $entry = $employee->timeEntries()->first();
-        $this->assertSame('5.3599510', (string) $entry->clock_in_latitude);
-        $this->assertSame('-4.0082560', (string) $entry->clock_in_longitude);
-    }
-
     public function test_employee_cannot_clock_in_twice_the_same_day(): void
     {
         $employee = $this->makeEmployeeWithUser();
