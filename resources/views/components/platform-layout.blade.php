@@ -38,6 +38,12 @@
                 </div>
             @endif
 
+            @if (session('error'))
+                <div class="mb-6 rounded-lg border border-danger/20 bg-danger-soft px-4 py-3 text-sm text-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             {{ $slot }}
         </main>
     </div>

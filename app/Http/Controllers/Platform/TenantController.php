@@ -147,14 +147,7 @@ class TenantController extends Controller
 
             CompanySetting::current()->update(['name' => $data['name']]);
 
-            // URL::forceRootUrl: this request is on the central domain, but
-            // 'password.reset' is a tenant-only route (routes/tenant.php) —
-            // without this, url()/route() would build the link against the
-            // central domain, which PreventAccessFromCentralDomains blocks.
-            URL::forceRootUrl("{$scheme}://{$data['domain']}");
-            $token = Password::broker()->createToken($admin);
-            $resetUrl = URL::route('password.reset', ['token' => $token, 'email' => $admin->email]);
-            URL::forceRootUrl(null);
+            $resetUrl = $this->buildResetUrl($admin, $data['domain'], $scheme);
         });
 
         $status = 'Tenant créé.';
@@ -171,5 +164,65 @@ class TenantController extends Controller
         }
 
         return redirect()->route('platform.tenants.index')->with('status', $status);
+    }
+
+    /**
+     * Re-send the same password-set welcome email as at provisioning time —
+     * for when the admin never got the first one, lost it, or the link
+     * expired (Password::broker() tokens expire after 60 minutes by
+     * default). Generates a fresh token every time; doesn't invalidate any
+     * still-outstanding one from a previous send.
+     */
+    public function resendWelcomeEmail(Tenant $tenant): RedirectResponse
+    {
+        $domain = $tenant->domains->first()?->domain;
+
+        if (! $domain) {
+            return redirect()->route('platform.tenants.index')
+                ->with('error', 'Ce tenant n\'a aucun domaine configuré.');
+        }
+
+        $scheme = request()->secure() ? 'https' : 'http';
+        $flash = null;
+
+        $tenant->run(function () use ($tenant, $domain, $scheme, &$flash) {
+            $admin = User::role('super-admin')->oldest()->first();
+
+            if (! $admin) {
+                $flash = ['error', 'Aucun compte administrateur trouvé pour ce tenant.'];
+
+                return;
+            }
+
+            $resetUrl = $this->buildResetUrl($admin, $domain, $scheme);
+
+            try {
+                Mail::to($admin->email)->send(new TenantAdminWelcomeMail($tenant->name, $resetUrl, $admin->email));
+                $flash = ['status', "Email renvoyé à {$admin->email}."];
+            } catch (Throwable $e) {
+                report($e);
+                $flash = ['error', "L'email n'a pas pu être envoyé (voir les logs)."];
+            }
+        });
+
+        [$type, $message] = $flash ?? ['error', 'Une erreur est survenue.'];
+
+        return redirect()->route('platform.tenants.index')->with($type, $message);
+    }
+
+    /**
+     * URL::forceRootUrl: the triggering request is always on the central
+     * domain, but 'password.reset' is a tenant-only route (routes/tenant.php)
+     * — without this, url()/route() would build the link against the central
+     * domain, which PreventAccessFromCentralDomains blocks.
+     */
+    private function buildResetUrl(User $admin, string $domain, string $scheme): string
+    {
+        URL::forceRootUrl("{$scheme}://{$domain}");
+        $token = Password::broker()->createToken($admin);
+        $resetUrl = URL::route('password.reset', ['token' => $token, 'email' => $admin->email]);
+        URL::forceRootUrl(null);
+
+        return $resetUrl;
     }
 }

@@ -18,6 +18,7 @@
                     <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Domaine(s)</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Statut</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-muted uppercase tracking-wider">Créé le</th>
+                    <th class="px-6 py-3"></th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-line">
@@ -30,10 +31,17 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-muted">{{ $tenant->status }}</td>
                         <td class="px-6 py-4 text-sm text-muted">{{ $tenant->created_at?->format('d/m/Y H:i') }}</td>
+                        <td class="px-6 py-4 text-right text-sm">
+                            <form method="POST" action="{{ route('platform.tenants.resend-welcome', $tenant) }}"
+                                data-confirm="Renvoyer l'email de création (nouveau lien de mot de passe) à l'admin de ce tenant ?">
+                                @csrf
+                                <button type="submit" class="text-brand hover:underline">Renvoyer l'email</button>
+                            </form>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-8 text-center text-sm text-muted">Aucun tenant pour le
+                        <td colspan="6" class="px-6 py-8 text-center text-sm text-muted">Aucun tenant pour le
                             moment.</td>
                     </tr>
                 @endforelse

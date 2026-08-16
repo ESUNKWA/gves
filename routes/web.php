@@ -34,4 +34,5 @@ Route::prefix('platform')
     ->group(function () {
         Route::get('tenants', [TenantController::class, 'index'])->name('tenants.index');
         Route::post('tenants', [TenantController::class, 'store'])->name('tenants.store');
+        Route::post('tenants/{tenant}/renvoyer-email', [TenantController::class, 'resendWelcomeEmail'])->name('tenants.resend-welcome');
     });
